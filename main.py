@@ -1,6 +1,6 @@
 import requests
 from mainUI import Ui_MainWindow
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QTableWidget
 from PyQt5.QtCore import pyqtSlot
 import sys
 import re
@@ -109,6 +109,7 @@ class MainWindow(QMainWindow):
         self.temp_rowCount = 0
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.ui.MainTable.setEditTriggers(QTableWidget.NoEditTriggers)
         self.ui.MainTable.setRowCount(30)
 
         self.lang = None
@@ -123,23 +124,23 @@ class MainWindow(QMainWindow):
         self.ui.loadMoreButton.clicked.connect(lambda: self.load_more(browser_header))
 
     def set_word_wrapper(self, lang: str, query: str, page: int, header: dict):
-        self.ui.MainTable.clearContents()
-        self.dict_obj.words = list()
-        self.temp_rowCount = 0
-        self.lang = lang
-        self.query = query
-        self.page = page
-        self.set_word(lang, query, page, header)
+        if query != "":
+            self.ui.MainTable.clearContents()
+            self.dict_obj.words = list()
+            self.temp_rowCount = 0
+            self.lang = lang
+            self.query = query
+            self.page = page
+            self.set_word(lang, query, page, header)
+            self.ui.MainTable.scrollToTop()
+        else:
+            pass
 
     @pyqtSlot()
     def set_word(self, lang: str, query: str, page: int, header: dict):
         self.rowCount = 0
+        self.temp_rowCount = 0
         word_start_index, word_end_index = self.dict_obj.get_word(lang, query, page, header)
-        # for i in range(len(dict_obj.words)):
-        #     for j in range(len(dict_obj.words[i].mean)):
-        #         for k in range(len(dict_obj.words[i].mean.keys())):
-        #             for l in dict_obj.words[i].mean[list(dict_obj.words[i].mean.keys())[k]]:
-        #                 mean_len += 0
         for i in range(word_start_index, word_end_index):
             self.dict_obj.words[i] = self.dict_obj.filter_word(self.dict_obj.words[i])
 
