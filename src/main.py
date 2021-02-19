@@ -1,9 +1,11 @@
 import requests
 from mainUI import Ui_MainWindow
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QTableWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QTableWidget, QShortcut
 from PyQt5.QtCore import pyqtSlot
-import sys
+from PyQt5.QtGui import QKeySequence
 import re
+
+langFamily = ["ko", "en", "zh", "ja"]
 
 
 class Word:
@@ -116,11 +118,24 @@ class MainWindow(QMainWindow):
         self.query = None
         self.page = 0
         self.dict_obj = Dictionary()
+        self.ui.queryEdit.setFocus()
+
+        query_key = QShortcut(QKeySequence("Ctrl+q"), self)
+        ko_key = QShortcut(QKeySequence("Ctrl+1"), self)
+        en_key = QShortcut(QKeySequence("Ctrl+2"), self)
+        zh_key = QShortcut(QKeySequence("Ctrl+3"), self)
+        ja_key = QShortcut(QKeySequence("Ctrl+4"), self)
+
+        query_key.activated.connect(lambda: self.ui.queryEdit.setFocus())
+        ko_key.activated.connect(lambda: self.switch_lang(0))
+        en_key.activated.connect(lambda: self.switch_lang(1))
+        zh_key.activated.connect(lambda: self.switch_lang(2))
+        ja_key.activated.connect(lambda: self.switch_lang(3))
 
         self.ui.queryEdit.returnPressed.connect(lambda: self.set_word_wrapper(
-            ["ko", "en", "zh", "ja"][self.ui.LangBox.currentIndex()], self.ui.queryEdit.text(), 1, browser_header))
+            langFamily[self.ui.LangBox.currentIndex()], self.ui.queryEdit.text(), 1, browser_header))
         self.ui.searchButton.clicked.connect(lambda: self.set_word_wrapper(
-            ["ko", "en", "zh", "ja"][self.ui.LangBox.currentIndex()], self.ui.queryEdit.text(), 1, browser_header))
+            langFamily[self.ui.LangBox.currentIndex()], self.ui.queryEdit.text(), 1, browser_header))
         self.ui.loadMoreButton.clicked.connect(lambda: self.load_more(browser_header))
 
     def set_word_wrapper(self, lang: str, query: str, page: int, header: dict):
@@ -170,6 +185,9 @@ class MainWindow(QMainWindow):
                     current_word_part_of_speech = "관용구"
                 else:
                     current_word_part_of_speech = str(list(current_word.mean.keys())[j])
+                for dict_value_index in range(len(current_word.mean[list(current_word.mean.keys())[j]])):
+                    if "(Abbr.)" in current_word.mean[list(current_word.mean.keys())[j]][dict_value_index]:
+                        current_word_part_of_speech = "약어"
                 self.ui.MainTable.setItem(self.rowCount, 1, QTableWidgetItem(current_word_part_of_speech))
                 if list(current_word.mean.keys())[j] is None:
                     word_dict_index = None
@@ -185,23 +203,14 @@ class MainWindow(QMainWindow):
         self.page = self.page + 1
         self.set_word(self.lang, self.query, self.page, header)
 
-
-def lang_to_query():  # 검색할 언어
-    lang = None
-    while lang not in ("ko", "en", "zh", "ja"):
-        lang = input("input language to search\n[ko]한국어 [en]영어 [zh]중국어 [ja]일본어\n>>")
-    return lang
-
-
-def word_to_query():  # 검색할 값
-    word = input("input word to search\n>>")
-    return word
+    def switch_lang(self, lang: int):
+        self.ui.LangBox.setCurrentIndex(lang)
 
 
 if __name__ == '__main__':
     browser_header = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) "
                                     "Chrome/88.0.4324.150 Safari/537.36"}  # 크롬에서 복사함
-    app = QApplication(sys.argv)
+    app = QApplication([])
     window = MainWindow()
     window.show()
     app.exec_()

@@ -10,6 +10,12 @@
     <height>600</height>
    </rect>
   </property>
+  <property name="font">
+   <font>
+    <family>맑은 고딕</family>
+    <pointsize>11</pointsize>
+   </font>
+  </property>
   <property name="windowTitle">
    <string>NaverDict-Client</string>
   </property>
@@ -68,6 +74,12 @@
        <enum>Qt::Horizontal</enum>
       </property>
       <widget class="QComboBox" name="LangBox">
+       <property name="font">
+        <font>
+         <family>맑은 고딕</family>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
        <item>
         <property name="text">
          <string>국어</string>
@@ -90,6 +102,12 @@
        </item>
       </widget>
       <widget class="QLineEdit" name="queryEdit">
+       <property name="font">
+        <font>
+         <family>맑은 고딕</family>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
        <property name="inputMethodHints">
         <set>Qt::ImhNone</set>
        </property>
@@ -110,6 +128,12 @@
        </property>
       </widget>
       <widget class="QPushButton" name="searchButton">
+       <property name="font">
+        <font>
+         <family>맑은 고딕</family>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string>검색</string>
        </property>
@@ -137,6 +161,7 @@
   <tabstop>queryEdit</tabstop>
   <tabstop>LangBox</tabstop>
   <tabstop>searchButton</tabstop>
+  <tabstop>loadMoreButton</tabstop>
   <tabstop>MainTable</tabstop>
  </tabstops>
  <resources/>
