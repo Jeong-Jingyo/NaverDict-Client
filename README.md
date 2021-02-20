@@ -10,5 +10,5 @@
 -----
 * *portable이 더 빠릅니다. 압축을 해제한 후, 폴더 루트의 NaverDict-Client.exe를 실행하세요.*
 * onefile은 단일 exe 파일만으로도 구동되지만, 느립니다.
-* *실행 파일이 디지털 서명되지 않아 Windwos Defender 경고가 뜨니 추가 정보를 눌러 실행하세요.*
+* *실행 파일이 디지털 서명되지 않아 Windows Defender 경고가 뜨니 추가 정보를 눌러 실행하세요.*
 * PyQt5 프레임워크를 사용하였습니다.
