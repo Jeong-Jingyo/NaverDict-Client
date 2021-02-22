@@ -28,7 +28,7 @@ class MainWindow(QMainWindow):
         zh_key = QShortcut(QKeySequence("Ctrl+3"), self)
         ja_key = QShortcut(QKeySequence("Ctrl+4"), self)
 
-        query_key.activated.connect(lambda: self.ui.queryEdit.setFocus())
+        query_key.activated.connect(self.set_focus_on_search)
         ko_key.activated.connect(lambda: self.switch_lang(0))
         en_key.activated.connect(lambda: self.switch_lang(1))
         zh_key.activated.connect(lambda: self.switch_lang(2))
@@ -133,6 +133,11 @@ class MainWindow(QMainWindow):
 
     def switch_lang(self, lang: int):
         self.ui.LangBox.setCurrentIndex(lang)
+
+    def set_focus_on_search(self):
+        self.ui.queryEdit.setFocus()
+        self.ui.queryEdit.selectAll()
+
 
 
 if __name__ == '__main__':
