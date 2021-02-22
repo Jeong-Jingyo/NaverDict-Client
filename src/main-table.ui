@@ -52,6 +52,20 @@
       </column>
       <column>
        <property name="text">
+        <string>발음</string>
+       </property>
+       <property name="foreground">
+        <brush brushstyle="SolidPattern">
+         <color alpha="255">
+          <red>120</red>
+          <green>120</green>
+          <blue>120</blue>
+         </color>
+        </brush>
+       </property>
+      </column>
+      <column>
+       <property name="text">
         <string>품사</string>
        </property>
       </column>
