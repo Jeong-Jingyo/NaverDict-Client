@@ -68,7 +68,7 @@ class MainWindow(QMainWindow):
         # 중국어 번체 받아오기
         for i in range(word_start_index, word_end_index - removed_word_amount):
             if self.dict_obj.lang == "zh" and len(self.dict_obj.words[i].word) < 2:
-                self.dict_obj.words[i].get_traditional_zh()
+                self.dict_obj.words[i].get_traditional_zh(browser_header)
 
         for i in range(len(self.dict_obj.words)):
             temp_current_word = self.dict_obj.words[i]
