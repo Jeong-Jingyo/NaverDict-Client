@@ -8,7 +8,18 @@
   - 1: 국어, 2: 영어, 3: 중국어, 4: 일본어
 * Ctrl + Q로 커서를 검색창에 놓을 수 있습니다.
 -----
-* *portable이 더 빠릅니다. 압축을 해제한 후, 폴더 루트의 NaverDict-Client.exe를 실행하세요.*
-* onefile은 단일 exe 파일만으로도 구동되지만, 느립니다.
+* *압축을 해제한 후, 폴더 루트의 NaverDict-Client.exe를 실행하세요.*
 * *실행 파일이 디지털 서명되지 않아 Windows Defender 경고가 뜨니 추가 정보를 눌러 실행하세요.*
+* 직접 실행하려면
+
+      git clone https://github.com/Jeong-Jingyo/NaverDict-Client.git
+      cd NaverDict-Client
+      python3 -m venv venv
+      #윈도우
+      ./venv/bin/activate
+      #우분투
+      source ./venv/bin/activate
+      pip3 install -r requirements.txt
+      python3 src/main.py
+      
 * PyQt5 프레임워크를 사용하였습니다.
