@@ -1,10 +1,20 @@
 from mainUI import Ui_MainWindow
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QTableWidget, QShortcut
+from errorPopup import Ui_Dialog
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QTableWidget, QShortcut, QDialog
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QKeySequence, QFont
 from dictionary import *
+from requests import exceptions
 
 langFamily = ["ko", "en", "zh", "ja"]
+
+
+class ErrorPopup(QDialog):
+    def __init__(self, message: str):
+        super(ErrorPopup, self).__init__()
+        self.popup = Ui_Dialog()
+        self.popup.setupUi(self)
+        self.popup.textBrowser.setText(message)
 
 
 class MainWindow(QMainWindow):
@@ -46,7 +56,11 @@ class MainWindow(QMainWindow):
             self.dict_obj.words = list()
             self.temp_rowCount = 0
             self.page = page
-            self.set_word(lang, query, page, header)
+            try:
+                self.set_word(lang, query, page, header)
+            except exceptions.ConnectionError:
+                a = ErrorPopup("데이터를 받아올 수 없습니다. 인터넷을 확인하세요.")
+                a.exec_()
             self.ui.MainTable.scrollToTop()
         else:
             pass
