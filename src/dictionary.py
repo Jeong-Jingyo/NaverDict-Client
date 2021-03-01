@@ -12,12 +12,14 @@ class Word:
         self.num = num  # 단어의 번호  ex)사과³
         self.mean = means  # {품사 : [뜻, 뜻, 뜻]}
         self.dict_name = dict_name  # 사전 이름 ex)표준국어대사전
-        self.word_url = entry_id  # 단어 상세정보 URL
+        self.entry_id = entry_id  # 단어 상세정보 URL
         self.pronounce = pronounce  # 발음 기호
         self.traditional_zh = None  # 중국어
+        self.word_url = "https://" + self.lang + ".dict.naver.com/#/entry/" + self.lang + "ko/" + self.entry_id
+        self.word_json_url = "https://" + self.lang + ".dict.naver.com/api/platform/" + self.lang + "ko/entry?entryId=" + self.entry_id#https://zh.dict.naver.com/api/platform/zhko/entry?entryId=ecb34e3c6ef645cd8f46d56cbcc84524&isConjsShowTTS=false&searchResult=false&hid=161458298857692300
 
     def get_traditional_zh(self):
-        req = requests.get(self.word_url, browser_header)
+        req = requests.get(self.word_json_url, browser_header)
         json = req.json()
         id_regex = re.compile("<id>\d*</id>")
         trsl_pronun_regex = re.compile("</?trsl_pronun>")
@@ -84,14 +86,11 @@ class Page:
                 means_dict[raw_word_json["meansCollector"][i]["partOfSpeech"]] \
                     .append(raw_word_json["meansCollector"][i]["means"][j]["value"])
 
-        dest_link = "https://" + self.lang + ".dict.naver.com/api/platform/" + self.lang + "ko/entry.nhn?entryId=" + \
-                    raw_word_json["entryId"]
-
         return Word(self.lang, raw_word_json["expEntry"],
                     raw_word_json["expEntrySuperscript"],
                     means_dict,
                     raw_word_json["sourceDictnameKO"],
-                    dest_link,
+                    raw_word_json["entryId"],
                     raw_word_json)
 
     @staticmethod
@@ -119,6 +118,10 @@ class Page:
                 for html in html_list:
                     temp_mean = temp_mean.replace(html, "")
                 word.mean[mean_keys_index][mean_value_index] = temp_mean
+
+        for mean_keys in word.mean.keys():
+            for mean in range(len(word.mean[mean_keys])):
+                word.mean[mean_keys][mean] = word.mean[mean_keys][mean].replace("&nbsp;", " ").replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&").replace("&quot;", "\"").replace("&apos;", "'")
 
         word.num = get_superscript_num(word.num)
 

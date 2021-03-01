@@ -5,6 +5,7 @@ from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QKeySequence, QFont
 from dictionary import *
 from requests import exceptions
+import webbrowser
 
 langFamily = ["ko", "en", "zh", "ja"]
 
@@ -20,6 +21,7 @@ class ErrorPopup(QDialog):
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
+        self.URLMap = dict()
         self.rowCount = 0
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -43,6 +45,7 @@ class MainWindow(QMainWindow):
         zh_key.activated.connect(lambda: self.switch_lang(2))
         ja_key.activated.connect(lambda: self.switch_lang(3))
 
+        self.ui.MainTable.cellDoubleClicked.connect(self.open_in_web_browser)
         self.ui.queryEdit.returnPressed.connect(lambda: self.first_query(langFamily[self.ui.LangBox.currentIndex()],
                                                                          self.ui.queryEdit.text()))
         self.ui.searchButton.clicked.connect(lambda: self.first_query(langFamily[self.ui.LangBox.currentIndex()],
@@ -63,8 +66,6 @@ class MainWindow(QMainWindow):
                 a = ErrorPopup("데이터를 받아올 수 없습니다. 인터넷을 확인하세요.")
                 a.exec_()
             self.ui.MainTable.scrollToTop()
-        elif query == self.dict_obj.query:
-            pass
         else:
             pass
 
@@ -96,6 +97,7 @@ class MainWindow(QMainWindow):
                 self.ui.MainTable.setItem(self.rowCount, word_column, QTableWidgetItem(current_word.word))
             if self.dict_obj.lang == "zh" and current_word.traditional_zh is not None:  # 중국어일때 번체 표시
                 self.ui.MainTable.setItem(self.rowCount, traditional_zh, QTableWidgetItem(current_word.traditional_zh))
+            self.URLMap[self.rowCount] = current_word.word_url
             for j in range(len(current_word.mean.keys())):
                 if list(current_word.mean.keys())[j] is None:   # json 에서 품사가 Null 일때 관용구로 표시
                     current_word_part_of_speech = "관용구"
@@ -134,6 +136,13 @@ class MainWindow(QMainWindow):
     def set_focus_on_search(self):
         self.ui.queryEdit.setFocus()
         self.ui.queryEdit.selectAll()
+
+    def open_in_web_browser(self):
+        if self.ui.MainTable.currentColumn() == 0:
+            try:
+                webbrowser.open(self.URLMap[self.ui.MainTable.currentRow()], 1)
+            except KeyError:
+                pass
 
 
 if __name__ == '__main__':
