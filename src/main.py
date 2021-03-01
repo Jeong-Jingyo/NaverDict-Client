@@ -21,7 +21,6 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.rowCount = 0
-        self.temp_rowCount = 0
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.ui.MainTable.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -30,7 +29,7 @@ class MainWindow(QMainWindow):
         self.ui.MainTable.hideColumn(2)
 
         self.page = 0
-        self.dict_obj = Dictionary()
+        self.dict_obj = None
 
         query_key = QShortcut(QKeySequence("Ctrl+q"), self)
         ko_key = QShortcut(QKeySequence("Ctrl+1"), self)
@@ -44,56 +43,32 @@ class MainWindow(QMainWindow):
         zh_key.activated.connect(lambda: self.switch_lang(2))
         ja_key.activated.connect(lambda: self.switch_lang(3))
 
-        self.ui.queryEdit.returnPressed.connect(lambda: self.set_word_wrapper(
-            langFamily[self.ui.LangBox.currentIndex()], self.ui.queryEdit.text(), 1, browser_header))
-        self.ui.searchButton.clicked.connect(lambda: self.set_word_wrapper(
-            langFamily[self.ui.LangBox.currentIndex()], self.ui.queryEdit.text(), 1, browser_header))
-        self.ui.loadMoreButton.clicked.connect(lambda: self.load_more(browser_header))
+        self.ui.queryEdit.returnPressed.connect(lambda: self.first_query(langFamily[self.ui.LangBox.currentIndex()],
+                                                                         self.ui.queryEdit.text()))
+        self.ui.searchButton.clicked.connect(lambda: self.first_query(langFamily[self.ui.LangBox.currentIndex()],
+                                                                      self.ui.queryEdit.text()))
+        self.ui.loadMoreButton.clicked.connect(self.load_more)
 
-    def set_word_wrapper(self, lang: str, query: str, page: int, header: dict):
+    def first_query(self, lang: str, query: str):
         if query != "":
+            self.rowCount = 0
+            del self.dict_obj
+            self.dict_obj = Dictionary()
+            self.ui.MainTable.setRowCount(0)
             self.ui.MainTable.clearContents()
-            self.dict_obj.words = list()
-            self.temp_rowCount = 0
-            self.page = page
             try:
-                self.set_word(lang, query, page, header)
+                self.dict_obj.load_first_page(lang, query)
+                self.print_on_table(self.dict_obj.pages[0])
             except exceptions.ConnectionError:
                 a = ErrorPopup("데이터를 받아올 수 없습니다. 인터넷을 확인하세요.")
                 a.exec_()
             self.ui.MainTable.scrollToTop()
+        elif query == self.dict_obj.query:
+            pass
         else:
             pass
 
-    @pyqtSlot()
-    def set_word(self, lang: str, query: str, page: int, header: dict):
-        self.rowCount = 0
-        self.temp_rowCount = 0
-        removed_word_amount = 0
-        word_start_index, word_end_index = self.dict_obj.get_word(lang, query, page, header)
-
-        for i in range(word_start_index, word_end_index):
-            self.dict_obj.words[i] = self.dict_obj.filter_word(self.dict_obj.words[i])
-
-        while None in self.dict_obj.words:
-            self.dict_obj.words.remove(None)
-            removed_word_amount += 1
-
-        # 중국어 번체 받아오기
-        for i in range(word_start_index, word_end_index - removed_word_amount):
-            if self.dict_obj.lang == "zh" and len(self.dict_obj.words[i].word) < 2:
-                self.dict_obj.words[i].get_traditional_zh(browser_header)
-
-        for i in range(len(self.dict_obj.words)):
-            temp_current_word = self.dict_obj.words[i]
-            for j in range(len(temp_current_word.mean.keys())):
-                if list(temp_current_word.mean.keys())[j] is None:
-                    temp_word_dict_index = None
-                else:
-                    temp_word_dict_index = str(list(temp_current_word.mean.keys())[j])
-                for k in range(len(temp_current_word.mean[temp_word_dict_index])):
-                    self.temp_rowCount = self.temp_rowCount + 1
-
+    def print_on_table(self, page: Page):
         # 테이블 크기, 행 가시성
         if self.dict_obj.lang == "zh":
             self.ui.MainTable.showColumn(2)
@@ -111,10 +86,9 @@ class MainWindow(QMainWindow):
         traditional_zh = 2
         mean_column = 3
 
-        self.ui.MainTable.setRowCount(self.temp_rowCount)
-
-        for i in range(len(self.dict_obj.words)):
-            current_word = self.dict_obj.words[i]
+        self.ui.MainTable.setRowCount(self.ui.MainTable.rowCount() + self.count_meanings(page))
+        for i in range(len(page.words)):
+            current_word = page.words[i]
             if current_word.num is not None:    # 단어를 테이블에 표시
                 self.ui.MainTable.setItem(self.rowCount, word_column,
                                           QTableWidgetItem(current_word.word + current_word.num))
@@ -128,7 +102,7 @@ class MainWindow(QMainWindow):
                 else:
                     current_word_part_of_speech = str(list(current_word.mean.keys())[j])
                 for dict_value_index in range(len(current_word.mean[list(current_word.mean.keys())[j]])):
-                    if "(Abbr.)" in current_word.mean[list(current_word.mean.keys())[j]][dict_value_index]: # 뜻 중에 (Abbr.)이 있으면 약어로 표시
+                    if "(Abbr.)" in current_word.mean[list(current_word.mean.keys())[j]][dict_value_index]:  # 뜻 중에 (Abbr.)이 있으면 약어로 표시
                         current_word_part_of_speech = "약어"
                 self.ui.MainTable.setItem(self.rowCount, pos_column, QTableWidgetItem(current_word_part_of_speech))
                 if list(current_word.mean.keys())[j] is None:   # 의미를 테이블에 표시
@@ -140,10 +114,19 @@ class MainWindow(QMainWindow):
                                               QTableWidgetItem(str(current_word.mean[word_dict_index][k])))
                     self.rowCount = self.rowCount + 1
 
+    @staticmethod
+    def count_meanings(page: Page):
+        count = 0
+        for word_count in range(len(page.words)):
+            for part_of_speech in page.words[word_count].mean.keys():
+                for meanings in range(len(page.words[word_count].mean[part_of_speech])):
+                    count += 1
+        return count
+
     @pyqtSlot()
-    def load_more(self, header: dict):
-        self.page = self.page + 1
-        self.set_word(self.dict_obj.lang, self.dict_obj.query, self.page, header)
+    def load_more(self):
+        self.dict_obj.load_next_page()
+        self.print_on_table(self.dict_obj.pages[self.page])
 
     def switch_lang(self, lang: int):
         self.ui.LangBox.setCurrentIndex(lang)
@@ -153,10 +136,7 @@ class MainWindow(QMainWindow):
         self.ui.queryEdit.selectAll()
 
 
-
 if __name__ == '__main__':
-    browser_header = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                                    "Chrome/88.0.4324.150 Safari/537.36"}  # 크롬에서 복사함
     app = QApplication([])
     window = MainWindow()
     window.show()
