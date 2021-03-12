@@ -29,6 +29,7 @@ class MainWindow(QMainWindow):
         self.ui.MainTable.setRowCount(30)
         self.ui.queryEdit.setFocus()
         self.ui.MainTable.hideColumn(2)
+        self.ui.loadMoreButton.setDisabled(True)
 
         self.page = 0
         self.dict_obj = None
@@ -54,6 +55,7 @@ class MainWindow(QMainWindow):
 
     def first_query(self, lang: str, query: str):
         if query != "":
+            self.ui.loadMoreButton.setDisabled(False)
             self.rowCount = 0
             del self.dict_obj
             self.dict_obj = Dictionary()
@@ -115,6 +117,7 @@ class MainWindow(QMainWindow):
                     self.ui.MainTable.setItem(self.rowCount, mean_column,
                                               QTableWidgetItem(str(current_word.mean[word_dict_index][k])))
                     self.rowCount = self.rowCount + 1
+        self.page += 1
 
     @staticmethod
     def count_meanings(page: Page):
