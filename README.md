@@ -9,8 +9,8 @@
   - 1: 국어, 2: 영어, 3: 중국어, 4: 일본어
 * Ctrl + Q로 커서를 검색창에 놓을 수 있습니다.
 -----
-* *압축을 해제한 후, 폴더 루트의 NaverDict-Client.exe를 실행하세요.*
-* *실행 파일이 디지털 서명되지 않아 Windows Defender 경고가 뜨니 추가 정보를 눌러 실행하세요.*
+* *Releases를 클릭하고 NaverDict-Client-Installer.exe를 실행하여 설치하세요*
+* *실행 파일이 디지털 서명되지 않아 Windows Defender 경고가 뜬다면 추가 정보를 눌러 실행하세요.*
 * 미리 컴파일된 버전을 사용하지 않고 직접 실행하려면
 
       git clone https://github.com/Jeong-Jingyo/NaverDict-Client.git
