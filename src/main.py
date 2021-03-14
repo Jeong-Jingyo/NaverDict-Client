@@ -61,6 +61,7 @@ class MainWindow(QMainWindow):
             self.dict_obj = Dictionary()
             self.ui.MainTable.setRowCount(0)
             self.ui.MainTable.clearContents()
+            self.URLMap = dict()
             try:
                 self.dict_obj.load_first_page(lang, query)
                 self.print_on_table(self.dict_obj.pages[0])
@@ -99,7 +100,8 @@ class MainWindow(QMainWindow):
                 self.ui.MainTable.setItem(self.rowCount, word_column, QTableWidgetItem(current_word.word))
             if self.dict_obj.lang == "zh" and current_word.traditional_zh is not None:  # 중국어일때 번체 표시
                 self.ui.MainTable.setItem(self.rowCount, traditional_zh, QTableWidgetItem(current_word.traditional_zh))
-            self.URLMap[self.rowCount] = current_word.word_url
+            if current_word.dict_name != "위키낱말사전":
+                self.URLMap[self.rowCount] = current_word.word_url
             for j in range(len(current_word.mean.keys())):
                 if list(current_word.mean.keys())[j] is None:   # json 에서 품사가 Null 일때 관용구로 표시
                     current_word_part_of_speech = "관용구"
