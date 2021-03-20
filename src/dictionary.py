@@ -46,6 +46,7 @@ class Word:
 class Page:
     url = None
     res = None
+
     def __init__(self, lang: str, query: str, page: int, header: dict):
         self.json_obj = None
         self.words = list()
@@ -114,6 +115,8 @@ class Page:
         for mean_keys_index in list(word.mean.keys()):
             for mean_value_index in range(len(word.mean[mean_keys_index])):
                 temp_mean = word.mean[mean_keys_index][mean_value_index]
+                if temp_mean is None:
+                    return None
                 html_list = html_regex.findall(temp_mean)
                 for html in html_list:
                     temp_mean = temp_mean.replace(html, "")

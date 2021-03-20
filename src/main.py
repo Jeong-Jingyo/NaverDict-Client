@@ -1,5 +1,5 @@
-from mainUI import Ui_MainWindow
-from errorPopup import Ui_Dialog
+from main_ui import Ui_MainWindow
+from errorPopup_ui import Ui_Dialog as Ui_errorPopup
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QTableWidget, QShortcut, QDialog
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QKeySequence, QFont
@@ -8,12 +8,13 @@ from requests import exceptions
 import webbrowser
 
 langFamily = ["ko", "en", "zh", "ja"]
+kr_langFamily = {"ko": "국어", "en": "영어", "zh": "중국어", "ja": "일본어"}
 
 
 class ErrorPopup(QDialog):
     def __init__(self, message: str):
         super(ErrorPopup, self).__init__()
-        self.popup = Ui_Dialog()
+        self.popup = Ui_errorPopup()
         self.popup.setupUi(self)
         self.popup.textBrowser.setText(message)
 
@@ -57,6 +58,7 @@ class MainWindow(QMainWindow):
         if query != "":
             self.ui.loadMoreButton.setDisabled(False)
             self.rowCount = 0
+            self.page = 0
             del self.dict_obj
             self.dict_obj = Dictionary()
             self.ui.MainTable.setRowCount(0)
@@ -65,10 +67,11 @@ class MainWindow(QMainWindow):
             try:
                 self.dict_obj.load_first_page(lang, query)
                 self.print_on_table(self.dict_obj.pages[0])
+                self.ui.MainTable.scrollToTop()
+                self.setWindowTitle("\"" + query + "\"의 " + kr_langFamily[lang] + "사전 검색 결과: NaverDict-Client")
             except exceptions.ConnectionError:
                 a = ErrorPopup("데이터를 받아올 수 없습니다. 인터넷을 확인하세요.")
                 a.exec_()
-            self.ui.MainTable.scrollToTop()
         else:
             pass
 
@@ -100,7 +103,7 @@ class MainWindow(QMainWindow):
                 self.ui.MainTable.setItem(self.rowCount, word_column, QTableWidgetItem(current_word.word))
             if self.dict_obj.lang == "zh" and current_word.traditional_zh is not None:  # 중국어일때 번체 표시
                 self.ui.MainTable.setItem(self.rowCount, traditional_zh, QTableWidgetItem(current_word.traditional_zh))
-            if current_word.dict_name != "위키낱말사전":
+            if current_word.dict_name != "위키낱말사전" and current_word.dict_name != "Urbandictionary":
                 self.URLMap[self.rowCount] = current_word.word_url
             for j in range(len(current_word.mean.keys())):
                 if list(current_word.mean.keys())[j] is None:   # json 에서 품사가 Null 일때 관용구로 표시
