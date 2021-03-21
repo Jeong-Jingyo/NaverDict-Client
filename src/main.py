@@ -20,6 +20,15 @@ class ErrorPopup(QDialog):
 
 
 class MainWindow(QMainWindow):
+    word_column = 0
+    pronunciation_column = 1
+    pos_column = 2
+    traditional_zh_column = 3
+    mean_column = 4
+    default_font = QFont()
+    default_font.setFamily("나눔바른고딕 옛한글")
+    default_font.setPointSize(12)
+
     def __init__(self):
         super(MainWindow, self).__init__()
         self.URLMap = dict()
@@ -29,7 +38,8 @@ class MainWindow(QMainWindow):
         self.ui.MainTable.setEditTriggers(QTableWidget.NoEditTriggers)
         self.ui.MainTable.setRowCount(30)
         self.ui.queryEdit.setFocus()
-        self.ui.MainTable.hideColumn(2)
+        self.ui.MainTable.hideColumn(self.pronunciation_column)
+        self.ui.MainTable.hideColumn(self.traditional_zh_column)
         self.ui.loadMoreButton.setDisabled(True)
 
         self.page = 0
@@ -78,31 +88,23 @@ class MainWindow(QMainWindow):
     def print_on_table(self, page: Page):
         # 테이블 크기, 행 가시성
         if self.dict_obj.lang == "zh":
-            self.ui.MainTable.showColumn(2)
+            self.ui.MainTable.showColumn(self.traditional_zh_column)
             self.ui.MainTable.setColumnWidth(2, 145)
-            font = QFont()
-            font.setPointSize(15)
-            self.ui.MainTable.setFont(font)
+            self.ui.MainTable.setFont(self.default_font)
         else:
-            self.ui.MainTable.hideColumn(2)
-            font = QFont()
-            font.setPointSize(11)
-            self.ui.MainTable.setFont(font)
-        word_column = 0
-        pos_column = 1
-        traditional_zh = 2
-        mean_column = 3
+            self.ui.MainTable.hideColumn(self.traditional_zh_column)
+            self.ui.MainTable.setFont(self.default_font)
 
         self.ui.MainTable.setRowCount(self.ui.MainTable.rowCount() + self.count_meanings(page))
         for i in range(len(page.words)):
             current_word = page.words[i]
             if current_word.num is not None:    # 단어를 테이블에 표시
-                self.ui.MainTable.setItem(self.rowCount, word_column,
+                self.ui.MainTable.setItem(self.rowCount, self.word_column,
                                           QTableWidgetItem(current_word.word + current_word.num))
             else:
-                self.ui.MainTable.setItem(self.rowCount, word_column, QTableWidgetItem(current_word.word))
-            if self.dict_obj.lang == "zh" and current_word.traditional_zh is not None:  # 중국어일때 번체 표시
-                self.ui.MainTable.setItem(self.rowCount, traditional_zh, QTableWidgetItem(current_word.traditional_zh))
+                self.ui.MainTable.setItem(self.rowCount, self.word_column, QTableWidgetItem(current_word.word))
+            if self.dict_obj.lang == "zh" and current_word.traditional_zh_column is not None:  # 중국어일때 번체 표시
+                self.ui.MainTable.setItem(self.rowCount, self.traditional_zh_column, QTableWidgetItem(current_word.traditional_zh_column))
             if current_word.dict_name != "위키낱말사전" and current_word.dict_name != "Urbandictionary":
                 self.URLMap[self.rowCount] = current_word.word_url
             for j in range(len(current_word.mean.keys())):
@@ -113,13 +115,13 @@ class MainWindow(QMainWindow):
                 for dict_value_index in range(len(current_word.mean[list(current_word.mean.keys())[j]])):
                     if "(Abbr.)" in current_word.mean[list(current_word.mean.keys())[j]][dict_value_index]:  # 뜻 중에 (Abbr.)이 있으면 약어로 표시
                         current_word_part_of_speech = "약어"
-                self.ui.MainTable.setItem(self.rowCount, pos_column, QTableWidgetItem(current_word_part_of_speech))
+                self.ui.MainTable.setItem(self.rowCount, self.pos_column, QTableWidgetItem(current_word_part_of_speech))
                 if list(current_word.mean.keys())[j] is None:   # 의미를 테이블에 표시
                     word_dict_index = None
                 else:
                     word_dict_index = str(list(current_word.mean.keys())[j])
                 for k in range(len(current_word.mean[word_dict_index])):
-                    self.ui.MainTable.setItem(self.rowCount, mean_column,
+                    self.ui.MainTable.setItem(self.rowCount, self.mean_column,
                                               QTableWidgetItem(str(current_word.mean[word_dict_index][k])))
                     self.rowCount = self.rowCount + 1
         self.page += 1

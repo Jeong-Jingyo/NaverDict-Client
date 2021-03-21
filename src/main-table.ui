@@ -20,8 +20,8 @@
    <string>NaverDict-Client</string>
   </property>
   <property name="windowIcon">
-   <iconset>
-    <normaloff>favicon.ico</normaloff>favicon.ico</iconset>
+   <iconset resource="resources.qrc">
+    <normaloff>:/Images/assets/favicon.ico</normaloff>:/Images/assets/favicon.ico</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
@@ -29,6 +29,12 @@
      <widget class="QTableWidget" name="MainTable">
       <property name="enabled">
        <bool>true</bool>
+      </property>
+      <property name="font">
+       <font>
+        <family>나눔바른고딕 옛한글</family>
+        <pointsize>14</pointsize>
+       </font>
       </property>
       <property name="acceptDrops">
        <bool>false</bool>
@@ -123,8 +129,8 @@
       <widget class="QLineEdit" name="queryEdit">
        <property name="font">
         <font>
-         <family>맑은 고딕</family>
-         <pointsize>12</pointsize>
+         <family>나눔바른고딕 옛한글</family>
+         <pointsize>14</pointsize>
         </font>
        </property>
        <property name="inputMethodHints">
@@ -183,6 +189,8 @@
   <tabstop>loadMoreButton</tabstop>
   <tabstop>MainTable</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

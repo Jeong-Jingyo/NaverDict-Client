@@ -7,7 +7,6 @@ browser_header = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Apple
 
 class Word:
     def __init__(self, lang: str, word: str, num: int, means: dict, dict_name: str, entry_id: str, pronounce: str):
-        self.lang = lang
         self.word = word  # 단어
         self.num = num  # 단어의 번호  ex)사과³
         self.mean = means  # {품사 : [뜻, 뜻, 뜻]}
@@ -15,8 +14,8 @@ class Word:
         self.entry_id = entry_id  # 단어 상세정보 URL
         self.pronounce = pronounce  # 발음 기호
         self.traditional_zh = None  # 중국어
-        self.word_url = "https://" + self.lang + ".dict.naver.com/#/entry/" + self.lang + "ko/" + self.entry_id
-        self.word_json_url = "https://" + self.lang + ".dict.naver.com/api/platform/" + self.lang + "ko/entry?entryId=" + self.entry_id#https://zh.dict.naver.com/api/platform/zhko/entry?entryId=ecb34e3c6ef645cd8f46d56cbcc84524&isConjsShowTTS=false&searchResult=false&hid=161458298857692300
+        self.word_url = "https://" + lang + ".dict.naver.com/#/entry/" + lang + "ko/" + self.entry_id
+        self.word_json_url = "https://" + lang + ".dict.naver.com/api/platform/" + lang + "ko/entry?entryId=" + self.entry_id#https://zh.dict.naver.com/api/platform/zhko/entry?entryId=ecb34e3c6ef645cd8f46d56cbcc84524&isConjsShowTTS=false&searchResult=false&hid=161458298857692300
 
     def get_traditional_zh(self):
         req = requests.get(self.word_json_url, browser_header)
@@ -51,7 +50,6 @@ class Page:
         self.json_obj = None
         self.words = list()
         self.temp_word_info = None
-        self.is_page_end = False
         self.lang = None
         self.query = None
         self.page = int()
@@ -67,14 +65,19 @@ class Page:
         self.res = requests.get(self.url, headers=header)
         self.json_obj = self.res.json()
         words_start_index = len(self.words)
+        if self.json_obj["searchResultMap"]["searchResultListMap"]["WORD"]["items"].__len__() == 0:
+            self.is_page_end = True
+            return
+        else:
+            self.is_page_end = False
+
         for k in range(15):
             try:
                 self.words.append(self.__return_word(
                     self.json_obj["searchResultMap"]["searchResultListMap"]["WORD"]["items"][k]))
-                self.words[words_start_index + k] = self.filter_word(self.words[words_start_index + k])
+                self.words[words_start_index + k] = self.filter_word(self.words[words_start_index + k], self.lang)
             except IndexError:
                 if len(self.json_obj["searchResultMap"]["searchResultListMap"]["WORD"]["items"]) == 0:
-                    self.is_page_end = True
                     break
         while None in self.words:
             self.words.remove(None)
@@ -95,18 +98,25 @@ class Page:
                     raw_word_json)
 
     @staticmethod
-    def filter_word(word: Word, filter_web_collection: bool = True,
+    def filter_word(word: Word, lang, filter_web_collection: bool = True,
                     filter_urimalsaem: bool = False):
-        img_regex = re.compile("<img.*>")
+        img_regex = re.compile("<img[^<|>]*>")
         html_regex = re.compile("<[^<|>]*>")
         if filter_web_collection and word.dict_name == "웹수집":
             return None
         if filter_urimalsaem and word.dict_name == "우리말샘":
             return None
-        if bool(img_regex.match(word.word)):
-            return None
 
         temp_word = word.word
+        if lang == "ko":
+            old_korean_regex = re.compile("alt=\".*\"")
+            img_tags = img_regex.findall(temp_word)
+            tags = dict()
+            for i in img_tags:
+                tags[i] = old_korean_regex.findall(i)[0].replace("alt=", "").replace("\"", "")
+            for i in list(tags.keys()):
+                temp_word = temp_word.replace(i, tags[i])
+
         html_list = html_regex.findall(word.word)
         for html in html_list:
             temp_word = temp_word.replace(html, "")
@@ -128,7 +138,7 @@ class Page:
 
         word.num = get_superscript_num(word.num)
 
-        if word.lang == "zh":
+        if lang == "zh":
             word.get_traditional_zh()
 
         return word
