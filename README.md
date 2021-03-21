@@ -1,6 +1,10 @@
 ﻿# NaverDict-Client는 간단한 네이버 사전 클라이언트입니다.
 
 ![Naver Dictionary Client_mainScreen](https://user-images.githubusercontent.com/61839345/107855805-e8b82080-6e67-11eb-9bd0-1fca21e0650f.gif)
+
+<p align="center">
+<a href="https://github.com/Jeong-Jingyo/NaverDict-Client/releases/latest/download/NaverDict-Client-Installer.exe"><img src="https://raw.githubusercontent.com/Jeong-Jingyo/NaverDict-Client/main/assets/download-installer.jpg" title="download NaverDict-Client installer" alt="download NaverDict-Client installer" height="130px" widght="130px"></a></p>
+
 1. 드롭다운 리스트로 검색할 언어를 선택하십시오. 
 2. 검색할 단어를 입력한 후 엔터 키를 누르거나 검색 버튼을 누르십시오.
 3. 더 많은 단어들을 불러오려면, 더 불러오기 버튼을 누르십시오.
