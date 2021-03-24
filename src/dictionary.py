@@ -138,7 +138,7 @@ class Page:
 
         word.num = get_superscript_num(word.num)
 
-        if lang == "zh":
+        if lang == "zh" and len(word.word) < 2 and word.word[0]:
             word.get_traditional_zh()
 
         return word

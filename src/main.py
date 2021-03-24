@@ -2,9 +2,10 @@ from main_ui import Ui_MainWindow
 from errorPopup_ui import Ui_Dialog as Ui_errorPopup
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QTableWidget, QShortcut, QDialog
 from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtGui import QKeySequence, QFont
+from PyQt5.QtGui import QKeySequence, QFont, QFontDatabase
 from dictionary import *
 from requests import exceptions
+import resources_rc
 import webbrowser
 
 langFamily = ["ko", "en", "zh", "ja"]
@@ -25,9 +26,6 @@ class MainWindow(QMainWindow):
     pos_column = 2
     traditional_zh_column = 3
     mean_column = 4
-    default_font = QFont()
-    default_font.setFamily("나눔바른고딕 옛한글")
-    default_font.setPointSize(12)
 
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -89,11 +87,11 @@ class MainWindow(QMainWindow):
         # 테이블 크기, 행 가시성
         if self.dict_obj.lang == "zh":
             self.ui.MainTable.showColumn(self.traditional_zh_column)
-            self.ui.MainTable.setColumnWidth(2, 145)
-            self.ui.MainTable.setFont(self.default_font)
+            self.ui.MainTable.setColumnWidth(self.traditional_zh_column, 145)
+            self.ui.MainTable.setFont(default_font)
         else:
             self.ui.MainTable.hideColumn(self.traditional_zh_column)
-            self.ui.MainTable.setFont(self.default_font)
+            self.ui.MainTable.setFont(default_font)
 
         self.ui.MainTable.setRowCount(self.ui.MainTable.rowCount() + self.count_meanings(page))
         for i in range(len(page.words)):
@@ -103,8 +101,8 @@ class MainWindow(QMainWindow):
                                           QTableWidgetItem(current_word.word + current_word.num))
             else:
                 self.ui.MainTable.setItem(self.rowCount, self.word_column, QTableWidgetItem(current_word.word))
-            if self.dict_obj.lang == "zh" and current_word.traditional_zh_column is not None:  # 중국어일때 번체 표시
-                self.ui.MainTable.setItem(self.rowCount, self.traditional_zh_column, QTableWidgetItem(current_word.traditional_zh_column))
+            if self.dict_obj.lang == "zh" and current_word.traditional_zh is not None:  # 중국어일때 번체 표시
+                self.ui.MainTable.setItem(self.rowCount, self.traditional_zh_column, QTableWidgetItem(current_word.traditional_zh))
             if current_word.dict_name != "위키낱말사전" and current_word.dict_name != "Urbandictionary":
                 self.URLMap[self.rowCount] = current_word.word_url
             for j in range(len(current_word.mean.keys())):
@@ -156,7 +154,17 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == '__main__':
+    resources_rc.qInitResources()
     app = QApplication([])
     window = MainWindow()
     window.show()
+    fontDB = QFontDatabase()
+    fontDB.addApplicationFont("../assets/NanumBarunGothic-YetHangul.ttf")
+    default_font = QFont("나눔바른고딕 옛한글")
+    query_font = QFont("나눔바른고딕 옛한글")
+    default_font.setPointSize(14)
+    query_font.setPointSize(13)
+    app.setFont(default_font)
+    window.ui.MainTable.setFont(default_font)
+    window.ui.queryEdit.setFont(query_font)
     app.exec_()
