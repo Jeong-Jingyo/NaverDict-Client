@@ -1,21 +1,24 @@
 import re
 import requests
+from playsound import playsound
+import os
+import time
 
 browser_header = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, "
                                 "like Gecko) Chrome/88.0.4324.190 Safari/537.36"}  # 크롬에서 복사함
 
 
 class Word:
-    def __init__(self, lang: str, word: str, num: int, means: dict, dict_name: str, entry_id: str, pronounce: str):
+    def __init__(self, lang: str, word: str, num: int, means: dict, dict_name: str, entry_id: str, pronounces: list):
         self.word = word  # 단어
         self.num = num  # 단어의 번호  ex)사과³
         self.mean = means  # {품사 : [뜻, 뜻, 뜻]}
         self.dict_name = dict_name  # 사전 이름 ex)표준국어대사전
         self.entry_id = entry_id  # 단어 상세정보 URL
-        self.pronounce = pronounce  # 발음 기호
+        self.pronounces = pronounces  # 발음 기호
         self.traditional_zh = None  # 중국어
         self.word_url = "https://" + lang + ".dict.naver.com/#/entry/" + lang + "ko/" + self.entry_id
-        self.word_json_url = "https://" + lang + ".dict.naver.com/api/platform/" + lang + "ko/entry?entryId=" + self.entry_id#https://zh.dict.naver.com/api/platform/zhko/entry?entryId=ecb34e3c6ef645cd8f46d56cbcc84524&isConjsShowTTS=false&searchResult=false&hid=161458298857692300
+        self.word_json_url = "https://" + lang + ".dict.naver.com/api/platform/" + lang + "ko/entry?entryId=" + self.entry_id
 
     def get_traditional_zh(self):
         req = requests.get(self.word_json_url, browser_header)
@@ -40,6 +43,24 @@ class Word:
             traditional_zh = ""
         finally:
             self.traditional_zh = traditional_zh
+
+    def pronounce(self, index: int):
+        urls = self.pronounces[index][1][1].split("|")
+        for url in urls:
+            file_name = "./cache/" + url[-32:] + ".mp3"
+            if not os.path.exists(file_name):
+                req = requests.get(url, browser_header)
+                try:
+                    with open(file_name, "wb") as f:
+                        f.write(req.content)
+                except FileNotFoundError:
+                    os.mkdir("./cache/")
+                    with open(file_name, "wb") as f:
+                        f.write(req.content)
+
+            playsound(file_name)
+            time.sleep(0.3)
+
 
 
 class Page:
@@ -83,6 +104,7 @@ class Page:
             self.words.remove(None)
 
     def __return_word(self, raw_word_json):
+
         means_dict = dict()
         for i in range(len(raw_word_json["meansCollector"])):
             means_dict[raw_word_json["meansCollector"][i]["partOfSpeech"]] = list()
@@ -90,12 +112,16 @@ class Page:
                 means_dict[raw_word_json["meansCollector"][i]["partOfSpeech"]] \
                     .append(raw_word_json["meansCollector"][i]["means"][j]["value"])
 
+        pronunciations = list()
+        for pron in raw_word_json["searchPhoneticSymbolList"]:
+            pronunciations.append((pron["phoneticSymbolType"], (pron["phoneticSymbol"], pron["phoneticSymbolPath"])))
+
         return Word(self.lang, raw_word_json["expEntry"],
                     raw_word_json["expEntrySuperscript"],
                     means_dict,
                     raw_word_json["sourceDictnameKO"],
                     raw_word_json["entryId"],
-                    raw_word_json)
+                    pronunciations)
 
     @staticmethod
     def filter_word(word: Word, lang, filter_web_collection: bool = True,

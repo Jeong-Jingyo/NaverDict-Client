@@ -20,8 +20,9 @@
    <string>NaverDict-Client</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="resources.qrc">
-    <normaloff>:/Images/assets/favicon.ico</normaloff>:/Images/assets/favicon.ico</iconset>
+   <iconset resource="../assets/resources.qrc">
+    <normaloff>:/images/favicon.ico</normaloff>
+    <normalon>:/images/favicon.ico</normalon>:/images/favicon.ico</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
@@ -45,6 +46,9 @@
       <property name="lineWidth">
        <number>5</number>
       </property>
+      <attribute name="horizontalHeaderVisible">
+       <bool>true</bool>
+      </attribute>
       <attribute name="horizontalHeaderStretchLastSection">
        <bool>true</bool>
       </attribute>
@@ -190,7 +194,7 @@
   <tabstop>MainTable</tabstop>
  </tabstops>
  <resources>
-  <include location="resources.qrc"/>
+  <include location="../assets/resources.qrc"/>
  </resources>
  <connections/>
 </ui>
