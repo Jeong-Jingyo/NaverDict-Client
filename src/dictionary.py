@@ -44,7 +44,7 @@ class Word:
         finally:
             self.traditional_zh = traditional_zh
 
-    def pronounce(self, index: int):
+    def download_pronunciation(self, index: int):
         urls = self.pronounces[index][1][1].split("|")
         for url in urls:
             file_name = "./cache/" + url[-32:] + ".mp3"
@@ -59,7 +59,6 @@ class Word:
                         f.write(req.content)
 
             playsound(file_name)
-            time.sleep(0.3)
 
 
 

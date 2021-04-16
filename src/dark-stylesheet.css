@@ -1,0 +1,34 @@
+#MainWindow {
+    background: Black;
+}
+#queryEdit, .QPushButton, #LangBox, .QTableWidget {
+    border: 2px solid grey;
+    border-radius: 2px;
+    background: Black;
+    color: white;
+}
+.PronunciationTable {
+    background: black;
+}
+.PronounceButton {
+    background: black;
+    border: 2px solid dodgerblue;
+    border-radius: 3px;
+    color: white;
+}
+.QTableWidget::selection {
+    background: black;
+}
+.QHeaderView:section {
+    background: black;
+    color:white;
+    border: 1px solid gray;
+}
+#queryEdit:focus, .QPushButton:focus{
+    border: 2px solid dodgerblue;
+    border-radius: 2px;
+    background: black;
+}
+.QSplitter {
+    background: black;
+}
