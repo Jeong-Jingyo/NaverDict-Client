@@ -22,7 +22,6 @@ if system() == "Windows":
     original_width = win32print.GetDeviceCaps(hDC, win32con.DESKTOPHORZRES)
     scaled_width = GetSystemMetrics(0)
     screen_scale = int(original_width / scaled_width)
-    print(screen_scale)
 
 langFamily = ["ko", "en", "zh", "ja"]
 kr_langFamily = {"ko": "국어", "en": "영어", "zh": "중국어", "ja": "일본어"}
