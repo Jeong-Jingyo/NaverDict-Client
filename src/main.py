@@ -257,8 +257,8 @@ class MainWindow(QMainWindow):
         self.page += 1
 
     def closeEvent(self, a0) -> None:
-        if exists("./cache"):
-            shutil.rmtree("./cache")
+        if exists(cache_dir):
+            shutil.rmtree(cache_dir)
 
     def change_font(self, lang: str):
         pass

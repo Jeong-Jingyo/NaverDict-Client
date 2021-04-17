@@ -1,8 +1,24 @@
 import re
 import requests
 from playsound import playsound
+from platform import system
 import os
-import time
+from pathlib import Path
+import sys
+
+
+if system() == "Windows":
+    if hasattr(sys, "frozen") and "Program Files" in sys.executable:
+        installered = True
+        working_dir = str(Path.home()) + "\\AppData\\Roaming\\NaverDict-Client\\"
+        cache_dir = working_dir + ".cache\\"
+        if not Path.exists(Path(working_dir)):
+            Path.mkdir(Path(working_dir))
+            if not Path.exists(Path(cache_dir)):
+                Path.mkdir(Path(cache_dir))
+    else:
+        installered = False
+        cache_dir = ".cache\\"
 
 browser_header = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, "
                                 "like Gecko) Chrome/88.0.4324.190 Safari/537.36"}  # 크롬에서 복사함
@@ -48,14 +64,14 @@ class Word:
     def download_pronunciation(self, index: int):
         urls = self.pronounces[index][1][1].split("|")
         for url in urls:
-            file_name = "./cache/" + url[-32:] + ".mp3"
+            file_name = cache_dir + url[-32:] + ".mp3"
             if not os.path.exists(file_name):
                 req = requests.get(url, browser_header)
                 try:
                     with open(file_name, "wb") as f:
                         f.write(req.content)
                 except FileNotFoundError:
-                    os.mkdir("./cache/")
+                    os.mkdir(cache_dir)
                     with open(file_name, "wb") as f:
                         f.write(req.content)
 
