@@ -93,7 +93,7 @@ class PronounceButton(QPushButton):
         else:
             pron_locale = ""
         if word.pronounces[index][1][0] is not None:
-            pron = delete_html(word.pronounces[index][1][0])
+            pron = "[" + delete_html(word.pronounces[index][1][0]) + "]"
         else:
             pron = ""
         super().__init__(QIcon(":/images/play-sound.svg"), pron_locale + pron)
@@ -117,7 +117,7 @@ class PronunciationLabel(QLabel):
         else:
             pron_locale = ""
         if word.pronounces[index][1][0] is not None:
-            pron = delete_html(word.pronounces[index][1][0])
+            pron = "[" + delete_html(word.pronounces[index][1][0]) + "]"
         else:
             pron = ""
         super().__init__(pron_locale + pron)

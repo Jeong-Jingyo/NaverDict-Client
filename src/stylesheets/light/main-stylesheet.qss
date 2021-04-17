@@ -25,10 +25,10 @@
 .QPushButton:pressed, .PronounceButton:pressed {
     border: 2px solid white;
 }
-.PronunciationLabel {
-    border: 0;
-    background: white;
-}
+/*.PronunciationLabel {*/
+/*    border: 0;*/
+/*    background: white;*/
+/*}*/
 .QSplitter, .QSplitter::handle {
     border: 0;
     background: white;
