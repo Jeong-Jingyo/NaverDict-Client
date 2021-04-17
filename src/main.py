@@ -11,15 +11,22 @@ from requests import exceptions
 
 import resources_rc
 from dictionary import *
-from errorPopup_ui import Ui_Dialog as Ui_errorPopup
-from main_ui import Ui_MainWindow
+from main_ui import *
+from platform import system
+
+if system() == "Windows":
+    from win32 import win32gui, win32print
+    from win32.win32api import GetSystemMetrics
+    import win32con
+    hDC = win32gui.GetDC(0)
+    original_width = win32print.GetDeviceCaps(hDC, win32con.DESKTOPHORZRES)
+    scaled_width = GetSystemMetrics(0)
+    screen_scale = int(original_width / scaled_width)
+    print(screen_scale)
 
 langFamily = ["ko", "en", "zh", "ja"]
 kr_langFamily = {"ko": "국어", "en": "영어", "zh": "중국어", "ja": "일본어"}
-old_kr_font = QFont("맑은 고딕", 15)
-old_kr_query_font = QFont("맑은 고딕", 14)
 default_font = QFont("맑은 고딕", 14)
-query_font = QFont("맑은 고딕", 13)
 
 
 class QPushButton(QPushButton):
@@ -64,7 +71,7 @@ class PronunciationTable(QTableWidget):
         for index in range(len(word.pronounces)):
             if (word.pronounces[index][1][0] is not None) or (word.pronounces[index][1][1] != ""):
                 if word.pronounces[index][1][1] != "":
-                    self.setCellWidget(0, printed, PronounceButton(word, index))
+                    self.setCellWidget(0, printed, PronounceButton(word, index, screen_scale))
                 else:
                     self.setCellWidget(0, printed, PronounceLabel(word, index))
                 printed += 1
@@ -72,10 +79,11 @@ class PronunciationTable(QTableWidget):
         self.setShowGrid(False)
         self.setFrameStyle(0)
         self.setContentsMargins(0, 0, 0, 1)
+        self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 
 
 class PronounceButton(QPushButton):
-    def __init__(self, word: Word, index: int):
+    def __init__(self, word: Word, index: int, scale: int):
         if word.pronounces[index][0] is not None:
             pron_locale = word.pronounces[index][0]
         else:
@@ -88,7 +96,8 @@ class PronounceButton(QPushButton):
         if word.pronounces[index][1][1] == "":
             self.setDisabled(True)
         self.clicked.connect(lambda: word.download_pronunciation(index))
-        self.setFixedHeight(35)
+        self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        self.setFont(default_font)
 
     @staticmethod
     @pyqtSlot()
@@ -104,12 +113,13 @@ class PronounceLabel(QLabel):
         else:
             pron_locale = ""
         if word.pronounces[index][1][0] is not None:
-            pron = delete_html(word.pronounces[index][1][0]) + "  "
+            pron = delete_html(word.pronounces[index][1][0])
         else:
             pron = ""
         super().__init__(pron_locale + pron)
-        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.setFixedHeight(35)
+        self.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.MinimumExpanding)
+        self.setFont(default_font)
+        self.setFixedWidth(self.fontMetrics().width(self.text()) + 10 * screen_scale)
 
 
 class MainWindow(QMainWindow):
@@ -122,9 +132,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.ui = Ui_MainWindow()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self, screen_scale)
         self.ui.queryEdit.setFocus()
-        self.setStyleSheet(open("stylesheets/light/main-stylesheet.qss").read())
         self.page = 0
         self.dict_obj = None
         self.URLMap = dict()
@@ -153,8 +162,8 @@ class MainWindow(QMainWindow):
 
     def first_query(self, lang: str, query: str):
         if query != "":
-            self.ui.queryEdit.setFixedHeight(40)
-            self.ui.showTable(self)
+            self.ui.queryEdit.setFixedHeight(40 * screen_scale)
+            self.ui.showTable(self, screen_scale)
             self.ui.MainTable.setEditTriggers(QTableWidget.NoEditTriggers)
             self.ui.MainTable.hideColumn(self.pronunciation_column)
             self.ui.MainTable.hideColumn(self.traditional_zh_column)
@@ -187,10 +196,8 @@ class MainWindow(QMainWindow):
         if self.dict_obj.lang == "zh":
             self.ui.MainTable.showColumn(self.traditional_zh_column)
             self.ui.MainTable.setColumnWidth(self.traditional_zh_column, 145)
-            self.ui.MainTable.setFont(old_kr_font)
         else:
             self.ui.MainTable.hideColumn(self.traditional_zh_column)
-            self.ui.MainTable.setFont(old_kr_font)
 
         self.ui.MainTable.setRowCount(self.ui.MainTable.rowCount() + self.count_meanings(page))
         for i in range(len(page.words)):
@@ -242,16 +249,17 @@ class MainWindow(QMainWindow):
             shutil.rmtree("./cache")
 
     def change_font(self, lang: str):
-        try:
-            if lang == "ko":
-                self.ui.MainTable.setFont(old_kr_font)
-                self.ui.queryEdit.setFont(old_kr_query_font)
-            else:
-                self.ui.MainTable.setFont(default_font)
-                self.ui.queryEdit.setFont(query_font)
-        except AttributeError:
-            self.ui.queryEdit.setFont(old_kr_font)
-            self.ui.queryEdit.setFont(default_font)
+        pass
+        # try:
+        #     if lang == "ko":
+        #         self.ui.MainTable.setFont(old_kr_font)
+        #         self.ui.queryEdit.setFont(old_kr_query_font)
+        #     else:
+        #         self.ui.MainTable.setFont(default_font)
+        #         self.ui.queryEdit.setFont(query_font)
+        # except AttributeError:
+        #     self.ui.queryEdit.setFont(old_kr_font)
+        #     self.ui.queryEdit.setFont(default_font)
 
     @staticmethod
     def count_meanings(page: Page):
@@ -299,6 +307,4 @@ if __name__ == '__main__':
     app = QApplication([])
     window = MainWindow()
     window.show()
-    app.setFont(old_kr_font)
-    window.ui.queryEdit.setFont(old_kr_query_font)
     app.exec_()

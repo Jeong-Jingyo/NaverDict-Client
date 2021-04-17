@@ -11,6 +11,9 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
+default_font = QtGui.QFont("맑은 고딕", 14)
+stylesheet = open("stylesheets/light/main-stylesheet.qss").read()
+
 class QPushButton(QtWidgets.QPushButton):
     def __init__(self, *__args):
         self.size = None
@@ -34,13 +37,12 @@ class QPushButton(QtWidgets.QPushButton):
 
 
 class Ui_MainWindow(object):
-    def setupUi(self, MainWindow):
+    def setupUi(self, MainWindow, scale: int):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1200, 900)
-        font = QtGui.QFont()
-        font.setFamily("맑은 고딕")
-        font.setPointSize(11)
-        MainWindow.setFont(font)
+        MainWindow.resize(2000, 400)
+        MainWindow.setFont(default_font)
+        MainWindow.move(300, 100)
+        MainWindow.setStyleSheet(stylesheet)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(":/images/favicon.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         icon.addPixmap(QtGui.QPixmap(":/images/favicon.ico"), QtGui.QIcon.Normal, QtGui.QIcon.On)
@@ -54,10 +56,7 @@ class Ui_MainWindow(object):
         self.splitter.setOrientation(QtCore.Qt.Horizontal)
         self.splitter.setObjectName("splitter")
         self.LangBox = QtWidgets.QComboBox(self.splitter)
-        font = QtGui.QFont()
-        font.setFamily("맑은 고딕")
-        font.setPointSize(14)
-        self.LangBox.setFont(font)
+        self.LangBox.setFont(default_font)
         self.LangBox.setObjectName("LangBox")
         self.LangBox.addItem("")
         self.LangBox.addItem("")
@@ -68,10 +67,7 @@ class Ui_MainWindow(object):
         policy.Expanding = True
         self.LangBox.setSizePolicy(policy)
         self.queryEdit = QtWidgets.QLineEdit(self.splitter)
-        font = QtGui.QFont()
-        font.setFamily("맑은 고딕")
-        font.setPointSize(20)
-        self.queryEdit.setFont(font)
+        self.queryEdit.setFont(default_font)
         self.queryEdit.setInputMethodHints(QtCore.Qt.ImhNone)
         self.queryEdit.setText("")
         self.queryEdit.setFrame(True)
@@ -80,10 +76,7 @@ class Ui_MainWindow(object):
         self.queryEdit.setClearButtonEnabled(True)
         self.queryEdit.setObjectName("queryEdit")
         self.searchButton = QPushButton(self.splitter)
-        font = QtGui.QFont()
-        font.setFamily("맑은 고딕")
-        font.setPointSize(14)
-        self.searchButton.setFont(font)
+        self.searchButton.setFont(default_font)
         self.searchButton.setObjectName("searchButton")
         self.gridLayout.addWidget(self.splitter, 0, 0, 1, 1)
 
@@ -104,13 +97,11 @@ class Ui_MainWindow(object):
         self.LangBox.setItemText(3, _translate("MainWindow", "일본어"))
         self.searchButton.setText(_translate("MainWindow", "검색"))
 
-    def showTable(self, MainWindow):
+    def showTable(self, MainWindow, scale: int):
+        MainWindow.resize(2000, 1500)
         self.MainTable = QtWidgets.QTableWidget(self.centralwidget)
         self.MainTable.setEnabled(True)
-        font = QtGui.QFont()
-        font.setFamily("맑은 고딕")
-        font.setPointSize(14)
-        self.MainTable.setFont(font)
+        self.MainTable.setFont(default_font)
         self.MainTable.setAcceptDrops(False)
         self.MainTable.setInputMethodHints(QtCore.Qt.ImhNone)
         self.MainTable.setLineWidth(5)
@@ -135,11 +126,15 @@ class Ui_MainWindow(object):
         self.MainTable.verticalHeader().setVisible(False)
         self.gridLayout.addWidget(self.MainTable, 1, 0, 1, 1)
         self.MainTable.setFocusPolicy(QtCore.Qt.NoFocus)
-        self.MainTable.horizontalScrollBar().setStyleSheet(open("stylesheets/light/handle-stylesheet.qss").read())
+        self.MainTable.horizontalScrollBar().setStyleSheet("")
+        self.MainTable.setFont(default_font)
+        self.MainTable.horizontalHeader().setFont(default_font)
 
         self.loadMoreButton = QPushButton(self.centralwidget)
         self.loadMoreButton.setMinimumSize(QtCore.QSize(0, 30))
         self.loadMoreButton.setObjectName("loadMoreButton")
+        self.loadMoreButton.setFixedHeight(35 * scale)
+        self.loadMoreButton.setFont(default_font)
         self.gridLayout.addWidget(self.loadMoreButton, 2, 0, 1, 1)
 
         self.retranslateTable()
@@ -159,6 +154,47 @@ class Ui_MainWindow(object):
         item = self.MainTable.horizontalHeaderItem(4)
         item.setText(_translate("MainWindow", "의미"))
         self.loadMoreButton.setText(_translate("MainWindow", "더 불러오기"))
+
+
+class Ui_errorPopup(object):
+    def setupUi(self, Dialog):
+        Dialog.setObjectName("Dialog")
+        Dialog.setEnabled(True)
+        Dialog.resize(300, 200)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(Dialog.sizePolicy().hasHeightForWidth())
+        Dialog.setSizePolicy(sizePolicy)
+        Dialog.setMinimumSize(QtCore.QSize(300, 200))
+        Dialog.setMaximumSize(QtCore.QSize(300, 200))
+        self.buttonBox = QtWidgets.QDialogButtonBox(Dialog)
+        self.buttonBox.setGeometry(QtCore.QRect(218, 160, 75, 23))
+        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
+        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Close)
+        self.buttonBox.setObjectName("buttonBox")
+        self.textBrowser = QtWidgets.QTextBrowser(Dialog)
+        self.textBrowser.setGeometry(QtCore.QRect(10, 10, 281, 141))
+        self.textBrowser.setObjectName("textBrowser")
+        self.textBrowser.setStyleSheet(stylesheet)
+        self.buttonBox.setStyleSheet(stylesheet)
+
+        self.retranslateUi(Dialog)
+        self.buttonBox.accepted.connect(Dialog.accept)
+        self.buttonBox.rejected.connect(Dialog.reject)
+        QtCore.QMetaObject.connectSlotsByName(Dialog)
+
+    def retranslateUi(self, Dialog):
+        _translate = QtCore.QCoreApplication.translate
+        Dialog.setWindowTitle(_translate("Dialog", "Error"))
+        self.textBrowser.setHtml(_translate("Dialog",
+                                            "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+                                            "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+                                            "p, li { white-space: pre-wrap; }\n"
+                                            "</style></head><body style=\" font-family:\'Gulim\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+                                            "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; "
+                                            "-qt-block-indent:0; text-indent:0px; font-family:\'맑은 고딕\'; "
+                                            "font-size:11pt;\"><br /></p></body></html>"))
 
 
 import resources_rc

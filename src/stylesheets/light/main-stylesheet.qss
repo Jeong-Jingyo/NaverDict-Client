@@ -6,71 +6,71 @@
     border: 1px solid lightgray;
     border-radius: 4px;
 }
-QLineEdit {
+.QLineEdit {
     background: white;
 }
-QLineEdit:focus {
+.QLineEdit:focus {
     border: 2px solid dodgerblue;
 }
-QPushButton, PronounceButton {
+.QPushButton, .PronounceButton {
     border: 3px solid dodgerblue;
     border-radius: 4px;
     background: dodgerblue;
     color: black;
 }
-QPushButton:hover, PronounceButton:hover {
+.QPushButton:hover, .PronounceButton:hover {
     background: #3F94D7;
     border: #3F94D7;
 }
-QPushButton:pressed, PronounceButton:pressed {
+.QPushButton:pressed, .PronounceButton:pressed {
     border: 2px solid white;
 }
-PronunciationLabel {
+.PronunciationLabel {
     border: 0;
     background: white;
 }
-QSplitter, QSplitter::handle {
+.QSplitter, .QSplitter::handle {
     border: 0;
     background: white;
 }
-QComboBox {
+.QComboBox {
     border: 1px solid lightgray;
     border-radius: 4px;
     background: lightgray;
     padding-left: 13px;
 }
-QComboBox::down-arrow {
+.QComboBox::down-arrow {
     width: 50px;
     height: 15px;
-    image: url(../assets/down-arrow-svgrepo-com.svg);
+    image: url(../assets/down-arrow.svg);
     padding-right: 30px;
 }
-QComboBox:hover {
+.QComboBox:hover {
     border: 2px solid gray;
     background: gray;
 }
-QComboBox::drop-down {
+.QComboBox::drop-down {
     border: 0;
 }
-QTableWidget, .PronunciationTable {
+.QTableWidget, .PronunciationTable {
     selection-background-color: white;
     selection-color: black;
 }
-QScrollBar {
+.QScrollBar {
     border: 0;
     background: white;
 }
-QScrollBar::handle {
+.QScrollBar::handle {
     background: lightgray;
     border: 3px solid lightgray;
     border-radius: 2px;
 }
-QHeaderView {
+.QHeaderView {
     border: 0;
     border-radius: 0;
     border-bottom: 2px solid lightgray;
 }
-QHeaderView::item {
+.QHeaderView::item {
     border: 1px solid lightgray;
 }
 PronunciationTable {
