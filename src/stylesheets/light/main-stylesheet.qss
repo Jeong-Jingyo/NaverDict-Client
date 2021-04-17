@@ -42,7 +42,7 @@
 .QComboBox::down-arrow {
     width: 50px;
     height: 15px;
-    image: url(../assets/down-arrow.svg);
+    image: url(:/images/down-arrow.svg);
     padding-right: 30px;
 }
 .QComboBox:hover {
@@ -52,7 +52,7 @@
 .QComboBox::drop-down {
     border: 0;
 }
-.QTableWidget, .PronunciationTable {
+.QTableWidget, .InfoTable {
     selection-background-color: white;
     selection-color: black;
 }
@@ -73,9 +73,9 @@
 .QHeaderView::item {
     border: 1px solid lightgray;
 }
-PronunciationTable {
+.InfoTable {
     border: 0;
 }
-PronunciationTable::item {
+.InfoTable::item {
     padding-right: 3px;
 }

@@ -58,14 +58,16 @@ class ErrorPopup(QDialog):
         self.popup.textBrowser.setText(message)
 
 
-class PronunciationTable(QTableWidget):
+class InfoTable(QTableWidget):
     def __init__(self, word: Word):
         length = 0
         printed = 0
         for index in range(len(word.pronounces)):
             if (word.pronounces[index][1][0] is not None) or (word.pronounces[index][1][1] != ""):
                 length += 1
-        super(PronunciationTable, self).__init__(1, length)
+            if word.traditional_zh is not None:
+                length += 1
+        super(InfoTable, self).__init__(1, length)
         self.horizontalHeader().setVisible(False)
         self.verticalHeader().setVisible(False)
         for index in range(len(word.pronounces)):
@@ -73,8 +75,11 @@ class PronunciationTable(QTableWidget):
                 if word.pronounces[index][1][1] != "":
                     self.setCellWidget(0, printed, PronounceButton(word, index, screen_scale))
                 else:
-                    self.setCellWidget(0, printed, PronounceLabel(word, index))
+                    self.setCellWidget(0, printed, PronunciationLabel(word, index))
                 printed += 1
+        if word.traditional_zh is not None:
+            self.setCellWidget(0, printed, InfoLabel(word.traditional_zh))
+            printed += 1
         self.resizeColumnsToContents()
         self.setShowGrid(False)
         self.setFrameStyle(0)
@@ -106,7 +111,7 @@ class PronounceButton(QPushButton):
         p.start()
 
 
-class PronounceLabel(QLabel):
+class PronunciationLabel(QLabel):
     def __init__(self, word: Word, index: int):
         if word.pronounces[index][0] is not None:
             pron_locale = word.pronounces[index][0]
@@ -117,6 +122,14 @@ class PronounceLabel(QLabel):
         else:
             pron = ""
         super().__init__(pron_locale + pron)
+        self.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.MinimumExpanding)
+        self.setFont(default_font)
+        self.setFixedWidth(self.fontMetrics().width(self.text()) + 10 * screen_scale)
+
+
+class InfoLabel(QLabel):
+    def __init__(self, text: str):
+        super().__init__(text)
         self.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.MinimumExpanding)
         self.setFont(default_font)
         self.setFixedWidth(self.fontMetrics().width(self.text()) + 10 * screen_scale)
@@ -192,12 +205,12 @@ class MainWindow(QMainWindow):
         pass
 
     def print_on_table(self, page: Page):
-        # 테이블 크기, 행 가시성
-        if self.dict_obj.lang == "zh":
-            self.ui.MainTable.showColumn(self.traditional_zh_column)
-            self.ui.MainTable.setColumnWidth(self.traditional_zh_column, 145)
-        else:
-            self.ui.MainTable.hideColumn(self.traditional_zh_column)
+        # # 테이블 크기, 행 가시성
+        # if self.dict_obj.lang == "zh":
+        #     self.ui.MainTable.showColumn(self.traditional_zh_column)
+        #     self.ui.MainTable.setColumnWidth(self.traditional_zh_column, 145)
+        # else:
+        #     self.ui.MainTable.hideColumn(self.traditional_zh_column)
 
         self.ui.MainTable.setRowCount(self.ui.MainTable.rowCount() + self.count_meanings(page))
         for i in range(len(page.words)):
@@ -218,7 +231,7 @@ class MainWindow(QMainWindow):
                 for i in current_word.pronounces:
                     self.ui.MainTable.setItem(self.rowCount, self.pronunciation_column, QTableWidgetItem(i[1][0]))
                 self.ui.MainTable.setSpan(self.rowCount, self.pronunciation_column, 1, 4)
-                self.ui.MainTable.setCellWidget(self.rowCount, self.pronunciation_column, PronunciationTable(current_word))
+                self.ui.MainTable.setCellWidget(self.rowCount, self.pronunciation_column, InfoTable(current_word))
                 self.rowCount += 1
 
             # 의미
@@ -291,15 +304,6 @@ class MainWindow(QMainWindow):
                 webbrowser.open(self.URLMap[self.ui.MainTable.currentRow()], 1)
             except KeyError:
                 pass
-
-
-def delete_html(text: str):
-    html_regex = re.compile("<[^<|>]*>")
-    html_list = html_regex.findall(text)
-    temp_text = text
-    for html in html_list:
-        temp_text = temp_text.replace(html, "")
-    return temp_text
 
 
 if __name__ == '__main__':

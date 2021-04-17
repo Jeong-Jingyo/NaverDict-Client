@@ -129,6 +129,7 @@ class Ui_MainWindow(object):
         self.MainTable.horizontalScrollBar().setStyleSheet("")
         self.MainTable.setFont(default_font)
         self.MainTable.horizontalHeader().setFont(default_font)
+        self.MainTable.hideColumn(3)
 
         self.loadMoreButton = QPushButton(self.centralwidget)
         self.loadMoreButton.setMinimumSize(QtCore.QSize(0, 30))
