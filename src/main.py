@@ -22,7 +22,6 @@ if system() == "Windows":
     original_width = win32print.GetDeviceCaps(hDC, win32con.DESKTOPHORZRES)
     scaled_width = GetSystemMetrics(0)
     screen_scale = int(original_width / scaled_width)
-    print(screen_scale)
 
 langFamily = ["ko", "en", "zh", "ja"]
 kr_langFamily = {"ko": "국어", "en": "영어", "zh": "중국어", "ja": "일본어"}
@@ -94,7 +93,7 @@ class PronounceButton(QPushButton):
         else:
             pron_locale = ""
         if word.pronounces[index][1][0] is not None:
-            pron = delete_html(word.pronounces[index][1][0])
+            pron = "[" + delete_html(word.pronounces[index][1][0]) + "]"
         else:
             pron = ""
         super().__init__(QIcon(":/images/play-sound.svg"), pron_locale + pron)
@@ -118,7 +117,7 @@ class PronunciationLabel(QLabel):
         else:
             pron_locale = ""
         if word.pronounces[index][1][0] is not None:
-            pron = delete_html(word.pronounces[index][1][0])
+            pron = "[" + delete_html(word.pronounces[index][1][0]) + "]"
         else:
             pron = ""
         super().__init__(pron_locale + pron)

@@ -39,9 +39,9 @@ class QPushButton(QtWidgets.QPushButton):
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow, scale: int):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(2000, 400)
+        MainWindow.resize(1500 * scale, 200 * scale)
         MainWindow.setFont(default_font)
-        MainWindow.move(300, 100)
+        MainWindow.move(50, 50)
         MainWindow.setStyleSheet(stylesheet)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(":/images/favicon.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -98,7 +98,7 @@ class Ui_MainWindow(object):
         self.searchButton.setText(_translate("MainWindow", "검색"))
 
     def showTable(self, MainWindow, scale: int):
-        MainWindow.resize(2000, 1500)
+        MainWindow.resize(1500 * scale, 700 * scale)
         self.MainTable = QtWidgets.QTableWidget(self.centralwidget)
         self.MainTable.setEnabled(True)
         self.MainTable.setFont(default_font)
