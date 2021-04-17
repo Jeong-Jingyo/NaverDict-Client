@@ -3,6 +3,7 @@
     <file>settings.svg</file>
     <file>favicon.ico</file>
     <file>play-sound.svg</file>
+    <file>down-arrow.svg</file>
   </qresource>
   <qresource prefix="fonts">
     <file>NanumBarunGothic-YetHangul.ttf</file>

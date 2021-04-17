@@ -1,20 +1,53 @@
-import webbrowser
-import shutil
 import multiprocessing
+import shutil
+import webbrowser
 from os.path import exists
 
-from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtGui import QKeySequence, QFont, QFontDatabase, QIcon
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QTableWidget, QShortcut, QDialog, QPushButton, QLabel
+from PyQt5.QtCore import pyqtSlot, QSize
+from PyQt5.QtGui import QKeySequence, QFont, QIcon, QFontMetrics
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QTableWidget, QShortcut, QDialog, QPushButton, \
+    QLabel, QSizePolicy
 from requests import exceptions
 
 import resources_rc
 from dictionary import *
-from errorPopup_ui import Ui_Dialog as Ui_errorPopup
-from main_ui import Ui_MainWindow
+from main_ui import *
+from platform import system
+
+if system() == "Windows":
+    from win32 import win32gui, win32print
+    from win32.win32api import GetSystemMetrics
+    import win32con
+    hDC = win32gui.GetDC(0)
+    original_width = win32print.GetDeviceCaps(hDC, win32con.DESKTOPHORZRES)
+    scaled_width = GetSystemMetrics(0)
+    screen_scale = int(original_width / scaled_width)
+    print(screen_scale)
 
 langFamily = ["ko", "en", "zh", "ja"]
 kr_langFamily = {"ko": "국어", "en": "영어", "zh": "중국어", "ja": "일본어"}
+default_font = QFont("맑은 고딕", 14)
+
+
+class QPushButton(QPushButton):
+    def __init__(self, *__args):
+        super(QPushButton, self).__init__(*__args)
+        self.size = self.font().pointSize()
+        self.icon_size = (self.iconSize().width(), self.iconSize().height())
+        self.pressed.connect(self.decrease_size)
+        self.released.connect(self.reset_size)
+
+    def decrease_size(self):
+        font = QFont()
+        font.setPointSize(self.size - 1)
+        self.setFont(font)
+        self.setIconSize(QSize(self.icon_size[0] - 1, self.icon_size[1] - 1))
+
+    def reset_size(self):
+        font = QFont()
+        font.setPointSize(self.size)
+        self.setFont(font)
+        self.setIconSize(QSize(self.icon_size[0], self.icon_size[1]))
 
 
 class ErrorPopup(QDialog):
@@ -25,25 +58,37 @@ class ErrorPopup(QDialog):
         self.popup.textBrowser.setText(message)
 
 
-class PronunciationTable(QTableWidget):
+class InfoTable(QTableWidget):
     def __init__(self, word: Word):
-        super(PronunciationTable, self).__init__(1, len(word.pronounces))
+        length = 0
+        printed = 0
+        for index in range(len(word.pronounces)):
+            if (word.pronounces[index][1][0] is not None) or (word.pronounces[index][1][1] != ""):
+                length += 1
+            if word.traditional_zh is not None:
+                length += 1
+        super(InfoTable, self).__init__(1, length)
         self.horizontalHeader().setVisible(False)
         self.verticalHeader().setVisible(False)
         for index in range(len(word.pronounces)):
             if (word.pronounces[index][1][0] is not None) or (word.pronounces[index][1][1] != ""):
                 if word.pronounces[index][1][1] != "":
-                    self.setCellWidget(0, index, PronounceButton(word, index))
+                    self.setCellWidget(0, printed, PronounceButton(word, index, screen_scale))
                 else:
-                    self.setCellWidget(0, index, PronounceLabel(word, index))
+                    self.setCellWidget(0, printed, PronunciationLabel(word, index))
+                printed += 1
+        if word.traditional_zh is not None:
+            self.setCellWidget(0, printed, InfoLabel(word.traditional_zh))
+            printed += 1
         self.resizeColumnsToContents()
         self.setShowGrid(False)
         self.setFrameStyle(0)
         self.setContentsMargins(0, 0, 0, 1)
+        self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 
 
 class PronounceButton(QPushButton):
-    def __init__(self, word: Word, index: int):
+    def __init__(self, word: Word, index: int, scale: int):
         if word.pronounces[index][0] is not None:
             pron_locale = word.pronounces[index][0]
         else:
@@ -55,17 +100,18 @@ class PronounceButton(QPushButton):
         super().__init__(QIcon(":/images/play-sound.svg"), pron_locale + pron)
         if word.pronounces[index][1][1] == "":
             self.setDisabled(True)
-        self.clicked.connect(lambda: word.pronounce(index))
-        self.setFixedHeight(29)
+        self.clicked.connect(lambda: word.download_pronunciation(index))
+        self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        self.setFont(default_font)
 
     @staticmethod
     @pyqtSlot()
     def pronounce(word: Word, index):
-        p = multiprocessing.Process(target=word.pronounce, args=(index,))
+        p = multiprocessing.Process(target=word.download_pronunciation, args=(index,))
         p.start()
 
 
-class PronounceLabel(QLabel):
+class PronunciationLabel(QLabel):
     def __init__(self, word: Word, index: int):
         if word.pronounces[index][0] is not None:
             pron_locale = word.pronounces[index][0]
@@ -76,10 +122,17 @@ class PronounceLabel(QLabel):
         else:
             pron = ""
         super().__init__(pron_locale + pron)
-        self.setStyleSheet("border-style: solid;"
-                           "border-width: 1px;"
-                           "border-color: #afafaf;")
-        self.setFixedHeight(29)
+        self.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.MinimumExpanding)
+        self.setFont(default_font)
+        self.setFixedWidth(self.fontMetrics().width(self.text()) + 10 * screen_scale)
+
+
+class InfoLabel(QLabel):
+    def __init__(self, text: str):
+        super().__init__(text)
+        self.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.MinimumExpanding)
+        self.setFont(default_font)
+        self.setFixedWidth(self.fontMetrics().width(self.text()) + 10 * screen_scale)
 
 
 class MainWindow(QMainWindow):
@@ -90,20 +143,16 @@ class MainWindow(QMainWindow):
     mean_column = 4
 
     def __init__(self):
-        super(MainWindow, self).__init__()
-        self.URLMap = dict()
-        self.rowCount = 0
+        super().__init__()
         self.ui = Ui_MainWindow()
-        self.ui.setupUi(self)
-        self.ui.MainTable.setEditTriggers(QTableWidget.NoEditTriggers)
-        self.ui.MainTable.setRowCount(30)
+        self.ui.setupUi(self, screen_scale)
         self.ui.queryEdit.setFocus()
-        self.ui.MainTable.hideColumn(self.pronunciation_column)
-        self.ui.MainTable.hideColumn(self.traditional_zh_column)
-        self.ui.loadMoreButton.setDisabled(True)
-
         self.page = 0
         self.dict_obj = None
+        self.URLMap = dict()
+        self.rowCount = 0
+        self.ui.splitter.handle(1).setDisabled(True)
+        self.ui.splitter.handle(2).setDisabled(True)
 
         query_key = QShortcut(QKeySequence("Ctrl+q"), self)
         ko_key = QShortcut(QKeySequence("Ctrl+1"), self)
@@ -118,17 +167,22 @@ class MainWindow(QMainWindow):
         ja_key.activated.connect(lambda: self.switch_lang(3))
 
         self.ui.LangBox.currentIndexChanged.connect(lambda: self.change_font(langFamily[self.ui.LangBox.currentIndex()]))
-
-        self.ui.MainTable.cellDoubleClicked.connect(self.open_in_web_browser)
         self.ui.queryEdit.returnPressed.connect(lambda: self.first_query(langFamily[self.ui.LangBox.currentIndex()],
                                                                          self.ui.queryEdit.text()))
         self.ui.searchButton.clicked.connect(lambda: self.first_query(langFamily[self.ui.LangBox.currentIndex()],
                                                                       self.ui.queryEdit.text()))
-        self.ui.loadMoreButton.clicked.connect(self.load_more)
+        self.ui.centralwidget.setVisible(True)
 
     def first_query(self, lang: str, query: str):
         if query != "":
-            self.ui.loadMoreButton.setDisabled(False)
+            self.ui.queryEdit.setFixedHeight(40 * screen_scale)
+            self.ui.showTable(self, screen_scale)
+            self.ui.MainTable.setEditTriggers(QTableWidget.NoEditTriggers)
+            self.ui.MainTable.hideColumn(self.pronunciation_column)
+            self.ui.MainTable.hideColumn(self.traditional_zh_column)
+            self.ui.MainTable.cellDoubleClicked.connect(self.open_in_web_browser)
+            self.ui.loadMoreButton.clicked.connect(self.load_more)
+
             self.rowCount = 0
             self.page = 0
             del self.dict_obj
@@ -147,15 +201,16 @@ class MainWindow(QMainWindow):
         else:
             pass
 
+    def query_anim(self):
+        pass
+
     def print_on_table(self, page: Page):
-        # 테이블 크기, 행 가시성
-        if self.dict_obj.lang == "zh":
-            self.ui.MainTable.showColumn(self.traditional_zh_column)
-            self.ui.MainTable.setColumnWidth(self.traditional_zh_column, 145)
-            self.ui.MainTable.setFont(old_kr_font)
-        else:
-            self.ui.MainTable.hideColumn(self.traditional_zh_column)
-            self.ui.MainTable.setFont(old_kr_font)
+        # # 테이블 크기, 행 가시성
+        # if self.dict_obj.lang == "zh":
+        #     self.ui.MainTable.showColumn(self.traditional_zh_column)
+        #     self.ui.MainTable.setColumnWidth(self.traditional_zh_column, 145)
+        # else:
+        #     self.ui.MainTable.hideColumn(self.traditional_zh_column)
 
         self.ui.MainTable.setRowCount(self.ui.MainTable.rowCount() + self.count_meanings(page))
         for i in range(len(page.words)):
@@ -176,7 +231,7 @@ class MainWindow(QMainWindow):
                 for i in current_word.pronounces:
                     self.ui.MainTable.setItem(self.rowCount, self.pronunciation_column, QTableWidgetItem(i[1][0]))
                 self.ui.MainTable.setSpan(self.rowCount, self.pronunciation_column, 1, 4)
-                self.ui.MainTable.setCellWidget(self.rowCount, self.pronunciation_column, PronunciationTable(current_word))
+                self.ui.MainTable.setCellWidget(self.rowCount, self.pronunciation_column, InfoTable(current_word))
                 self.rowCount += 1
 
             # 의미
@@ -207,12 +262,17 @@ class MainWindow(QMainWindow):
             shutil.rmtree("./cache")
 
     def change_font(self, lang: str):
-        if lang == "ko":
-            self.ui.MainTable.setFont(old_kr_font)
-            self.ui.queryEdit.setFont(old_kr_query_font)
-        else:
-            self.ui.MainTable.setFont(default_font)
-            self.ui.queryEdit.setFont(query_font)
+        pass
+        # try:
+        #     if lang == "ko":
+        #         self.ui.MainTable.setFont(old_kr_font)
+        #         self.ui.queryEdit.setFont(old_kr_query_font)
+        #     else:
+        #         self.ui.MainTable.setFont(default_font)
+        #         self.ui.queryEdit.setFont(query_font)
+        # except AttributeError:
+        #     self.ui.queryEdit.setFont(old_kr_font)
+        #     self.ui.queryEdit.setFont(default_font)
 
     @staticmethod
     def count_meanings(page: Page):
@@ -246,30 +306,9 @@ class MainWindow(QMainWindow):
                 pass
 
 
-def delete_html(text: str):
-    html_regex = re.compile("<[^<|>]*>")
-    html_list = html_regex.findall(text)
-    temp_text = text
-    for html in html_list:
-        temp_text = temp_text.replace(html, "")
-    return temp_text
-
-
 if __name__ == '__main__':
     resources_rc.qInitResources()
     app = QApplication([])
     window = MainWindow()
     window.show()
-    print(QFontDatabase.addApplicationFont("./assets/NanumBarunGothic-YetHangul.ttf"))
-    default_font = QFont("맑은 고딕")
-    query_font = QFont("맑은 고딕")
-    default_font.setPointSize(14)
-    query_font.setPointSize(13)
-    old_kr_font = QFont("나눔바른고딕 옛한글")
-    old_kr_query_font = QFont("나눔바른고딕 옛한글")
-    old_kr_font.setPointSize(15)
-    old_kr_query_font.setPointSize(14)
-    app.setFont(old_kr_font)
-    window.ui.MainTable.setFont(old_kr_font)
-    window.ui.queryEdit.setFont(old_kr_query_font)
     app.exec_()

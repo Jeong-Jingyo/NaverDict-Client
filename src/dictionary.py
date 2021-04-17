@@ -9,42 +9,43 @@ browser_header = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Apple
 
 
 class Word:
-    def __init__(self, lang: str, word: str, num: int, means: dict, dict_name: str, entry_id: str, pronounces: list):
+    def __init__(self, lang: str, word: str, num: int, means: dict, dict_name: str, entry_id: str, pronounces: list, traditional_zh):
         self.word = word  # 단어
         self.num = num  # 단어의 번호  ex)사과³
         self.mean = means  # {품사 : [뜻, 뜻, 뜻]}
         self.dict_name = dict_name  # 사전 이름 ex)표준국어대사전
         self.entry_id = entry_id  # 단어 상세정보 URL
         self.pronounces = pronounces  # 발음 기호
-        self.traditional_zh = None  # 중국어
+        self.traditional_zh = traditional_zh  # 중국어
         self.word_url = "https://" + lang + ".dict.naver.com/#/entry/" + lang + "ko/" + self.entry_id
         self.word_json_url = "https://" + lang + ".dict.naver.com/api/platform/" + lang + "ko/entry?entryId=" + self.entry_id
+        print(traditional_zh)
 
-    def get_traditional_zh(self):
-        req = requests.get(self.word_json_url, browser_header)
-        json = req.json()
-        id_regex = re.compile("<id>\d*</id>")
-        trsl_pronun_regex = re.compile("</?trsl_pronun>")
-        try:
-            id_matching = id_regex.findall(json["entry"]["group"]["entryCommon"]["traditional_entry"])
-            trsl_pronun_matching = trsl_pronun_regex.findall(json["entry"]["group"]["entryCommon"]["mix_pron"])
-            try:
-                traditional_zh = json["entry"]["group"]["entryCommon"]["traditional_entry"].replace(id_matching[0],
-                                                                                                    "") \
-                                 + " " + json["entry"]["group"]["entryCommon"]["mix_pron"].replace(
-                    trsl_pronun_matching[0], "").replace(trsl_pronun_matching[1], "")
-            except IndexError:
-                try:
-                    traditional_zh = json["entry"]["group"]["entryCommon"]["mix_pron"].replace(
-                        trsl_pronun_matching[0], "").replace(trsl_pronun_matching[1], "")
-                except IndexError:
-                    traditional_zh = ""
-        except TypeError:
-            traditional_zh = ""
-        finally:
-            self.traditional_zh = traditional_zh
+    # def get_traditional_zh(self):
+    #     req = requests.get(self.word_json_url, browser_header)
+    #     json = req.json()
+    #     id_regex = re.compile("<id>\d*</id>")
+    #     trsl_pronun_regex = re.compile("</?trsl_pronun>")
+    #     try:
+    #         id_matching = id_regex.findall(json["entry"]["group"]["entryCommon"]["traditional_entry"])
+    #         trsl_pronun_matching = trsl_pronun_regex.findall(json["entry"]["group"]["entryCommon"]["mix_pron"])
+    #         try:
+    #             traditional_zh = json["entry"]["group"]["entryCommon"]["traditional_entry"].replace(id_matching[0],
+    #                                                                                                 "") \
+    #                              + " " + json["entry"]["group"]["entryCommon"]["mix_pron"].replace(
+    #                 trsl_pronun_matching[0], "").replace(trsl_pronun_matching[1], "")
+    #         except IndexError:
+    #             try:
+    #                 traditional_zh = json["entry"]["group"]["entryCommon"]["mix_pron"].replace(
+    #                     trsl_pronun_matching[0], "").replace(trsl_pronun_matching[1], "")
+    #             except IndexError:
+    #                 traditional_zh = ""
+    #     except TypeError:
+    #         traditional_zh = ""
+    #     finally:
+    #         self.traditional_zh = traditional_zh
 
-    def pronounce(self, index: int):
+    def download_pronunciation(self, index: int):
         urls = self.pronounces[index][1][1].split("|")
         for url in urls:
             file_name = "./cache/" + url[-32:] + ".mp3"
@@ -59,7 +60,6 @@ class Word:
                         f.write(req.content)
 
             playsound(file_name)
-            time.sleep(0.3)
 
 
 
@@ -110,18 +110,23 @@ class Page:
             means_dict[raw_word_json["meansCollector"][i]["partOfSpeech"]] = list()
             for j in range(len(raw_word_json["meansCollector"][i]["means"])):
                 means_dict[raw_word_json["meansCollector"][i]["partOfSpeech"]] \
-                    .append(raw_word_json["meansCollector"][i]["means"][j]["value"])
+                    .append(delete_html(raw_word_json["meansCollector"][i]["means"][j]["value"]))
 
         pronunciations = list()
         for pron in raw_word_json["searchPhoneticSymbolList"]:
             pronunciations.append((pron["phoneticSymbolType"], (pron["phoneticSymbol"], pron["phoneticSymbolPath"])))
+
+        if self.lang == "zh":
+            traditional_zh = raw_word_json["searchTraditionalChineseList"][0]["traditionalChinese"]
+        else:
+            traditional_zh = None
 
         return Word(self.lang, raw_word_json["expEntry"],
                     raw_word_json["expEntrySuperscript"],
                     means_dict,
                     raw_word_json["sourceDictnameKO"],
                     raw_word_json["entryId"],
-                    pronunciations)
+                    pronunciations, traditional_zh)
 
     @staticmethod
     def filter_word(word: Word, lang, filter_web_collection: bool = True,
@@ -164,9 +169,6 @@ class Page:
 
         word.num = get_superscript_num(word.num)
 
-        if lang == "zh" and len(word.word) < 2 and word.word[0]:
-            word.get_traditional_zh()
-
         return word
 
 
@@ -201,3 +203,12 @@ def get_superscript_num(num: int or None):
         return temp_uppers
     else:
         return None
+
+
+def delete_html(text: str):
+    html_regex = re.compile("<[^<|>]*>")
+    html_list = html_regex.findall(text)
+    temp_text = text
+    for html in html_list:
+        temp_text = temp_text.replace(html, "")
+    return temp_text
