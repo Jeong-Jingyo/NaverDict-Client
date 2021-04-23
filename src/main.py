@@ -2,17 +2,15 @@ import multiprocessing
 import shutil
 import webbrowser
 from os.path import exists
+from platform import system
 
-from PyQt5.QtCore import pyqtSlot, QSize
-from PyQt5.QtGui import QKeySequence, QFont, QIcon, QFontMetrics
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QTableWidget, QShortcut, QDialog, QPushButton, \
-    QLabel, QSizePolicy
+from PyQt5.QtCore import QSize
+from PyQt5.QtGui import QKeySequence, QFont, QIcon
+from PyQt5.QtWidgets import QTableWidgetItem, QTableWidget, QShortcut, QPushButton, QSizePolicy
 from requests import exceptions
 
-import resources_rc
 from dictionary import *
 from main_ui import *
-from platform import system
 
 if system() == "Windows":
     from win32 import win32gui, win32print
@@ -29,25 +27,25 @@ default_font = QFont("맑은 고딕", 14)
 
 
 class QPushButton(QPushButton):
+    base_font = QFont("맑은 고딕")
+
     def __init__(self, *__args):
+        self.size = None
         super(QPushButton, self).__init__(*__args)
-        self.size = self.font().pointSize()
         self.icon_size = (self.iconSize().width(), self.iconSize().height())
         self.pressed.connect(self.decrease_size)
         self.released.connect(self.reset_size)
 
     def decrease_size(self):
-        font = QFont()
-        font.setPointSize(self.size - 1)
-        self.setFont(font)
+        self.size = self.font().pointSize()
+        self.base_font.setPointSize(self.size - 1)
+        self.setFont(self.base_font)
         self.setIconSize(QSize(self.icon_size[0] - 1, self.icon_size[1] - 1))
 
     def reset_size(self):
-        font = QFont()
-        font.setPointSize(self.size)
-        self.setFont(font)
+        self.base_font.setPointSize(self.size)
+        self.setFont(self.base_font)
         self.setIconSize(QSize(self.icon_size[0], self.icon_size[1]))
-
 
 class ErrorPopup(QDialog):
     def __init__(self, message: str):
@@ -136,10 +134,8 @@ class InfoLabel(QLabel):
 
 class MainWindow(QMainWindow):
     word_column = 0
-    pronunciation_column = 1
-    pos_column = 2
-    traditional_zh_column = 3
-    mean_column = 4
+    pos_column = 1
+    mean_column = 2
 
     def __init__(self):
         super().__init__()
@@ -177,8 +173,6 @@ class MainWindow(QMainWindow):
             self.ui.queryEdit.setFixedHeight(40 * screen_scale)
             self.ui.showTable(self, screen_scale)
             self.ui.MainTable.setEditTriggers(QTableWidget.NoEditTriggers)
-            self.ui.MainTable.hideColumn(self.pronunciation_column)
-            self.ui.MainTable.hideColumn(self.traditional_zh_column)
             self.ui.MainTable.cellDoubleClicked.connect(self.open_in_web_browser)
             self.ui.loadMoreButton.clicked.connect(self.load_more)
 
@@ -204,12 +198,6 @@ class MainWindow(QMainWindow):
         pass
 
     def print_on_table(self, page: Page):
-        # # 테이블 크기, 행 가시성
-        # if self.dict_obj.lang == "zh":
-        #     self.ui.MainTable.showColumn(self.traditional_zh_column)
-        #     self.ui.MainTable.setColumnWidth(self.traditional_zh_column, 145)
-        # else:
-        #     self.ui.MainTable.hideColumn(self.traditional_zh_column)
 
         self.ui.MainTable.setRowCount(self.ui.MainTable.rowCount() + self.count_meanings(page))
         for i in range(len(page.words)):
@@ -220,17 +208,13 @@ class MainWindow(QMainWindow):
                                           QTableWidgetItem(current_word.word + current_word.num))
             else:
                 self.ui.MainTable.setItem(self.rowCount, self.word_column, QTableWidgetItem(current_word.word))
-            if self.dict_obj.lang == "zh" and current_word.traditional_zh is not None:  # 중국어일때 번체 표시
-                self.ui.MainTable.setItem(self.rowCount, self.traditional_zh_column, QTableWidgetItem(current_word.traditional_zh))
             if current_word.dict_name != "위키낱말사전" and current_word.dict_name != "Urbandictionary":
                 self.URLMap[self.rowCount] = current_word.word_url
 
             # 발음 버튼
             if len(current_word.pronounces) != 0:
-                for i in current_word.pronounces:
-                    self.ui.MainTable.setItem(self.rowCount, self.pronunciation_column, QTableWidgetItem(i[1][0]))
-                self.ui.MainTable.setSpan(self.rowCount, self.pronunciation_column, 1, 4)
-                self.ui.MainTable.setCellWidget(self.rowCount, self.pronunciation_column, InfoTable(current_word))
+                self.ui.MainTable.setSpan(self.rowCount, self.pos_column, 1, 2)
+                self.ui.MainTable.setCellWidget(self.rowCount, self.pos_column, InfoTable(current_word))
                 self.rowCount += 1
 
             # 의미

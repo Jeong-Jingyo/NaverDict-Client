@@ -25,7 +25,7 @@ browser_header = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Apple
 
 
 class Word:
-    def __init__(self, lang: str, word: str, num: int, means: dict, dict_name: str, entry_id: str, pronounces: list, traditional_zh):
+    def __init__(self, lang: str, word: str, num: int, means: dict, dict_name: str, entry_id: str, pronounces: list, traditional_zh = None):
         self.word = word  # 단어
         self.num = num  # 단어의 번호  ex)사과³
         self.mean = means  # {품사 : [뜻, 뜻, 뜻]}
@@ -35,7 +35,7 @@ class Word:
         self.traditional_zh = traditional_zh  # 중국어
         self.word_url = "https://" + lang + ".dict.naver.com/#/entry/" + lang + "ko/" + self.entry_id
         self.word_json_url = "https://" + lang + ".dict.naver.com/api/platform/" + lang + "ko/entry?entryId=" + self.entry_id
-        print(traditional_zh)
+        print(word)
 
     # def get_traditional_zh(self):
     #     req = requests.get(self.word_json_url, browser_header)
@@ -78,7 +78,6 @@ class Word:
             playsound(file_name)
 
 
-
 class Page:
     url = None
     res = None
@@ -102,7 +101,7 @@ class Page:
         self.res = requests.get(self.url, headers=header)
         self.json_obj = self.res.json()
         words_start_index = len(self.words)
-        if self.json_obj["searchResultMap"]["searchResultListMap"]["WORD"]["items"].__len__() == 0:
+        if len(self.json_obj["searchResultMap"]["searchResultListMap"]["WORD"]["items"]) == 0:
             self.is_page_end = True
             return
         else:
@@ -133,16 +132,21 @@ class Page:
             pronunciations.append((pron["phoneticSymbolType"], (pron["phoneticSymbol"], pron["phoneticSymbolPath"])))
 
         if self.lang == "zh":
-            traditional_zh = raw_word_json["searchTraditionalChineseList"][0]["traditionalChinese"]
+            try:
+                traditional_zh = raw_word_json["searchTraditionalChineseList"][0]["traditionalChinese"]
+            except IndexError:
+                traditional_zh = None
         else:
             traditional_zh = None
 
-        return Word(self.lang, raw_word_json["expEntry"],
+        word = Word(self.lang, raw_word_json["expEntry"],
                     raw_word_json["expEntrySuperscript"],
                     means_dict,
                     raw_word_json["sourceDictnameKO"],
                     raw_word_json["entryId"],
                     pronunciations, traditional_zh)
+        print(" -- :" + word.word)
+        return word
 
     @staticmethod
     def filter_word(word: Word, lang, filter_web_collection: bool = True,
