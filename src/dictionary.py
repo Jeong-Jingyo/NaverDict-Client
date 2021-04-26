@@ -61,21 +61,19 @@ class Word:
     #     finally:
     #         self.traditional_zh = traditional_zh
 
-    def download_pronunciation(self, index: int):
-        urls = self.pronounces[index][1][1].split("|")
-        for url in urls:
-            file_name = cache_dir + url[-32:] + ".mp3"
-            if not os.path.exists(file_name):
-                req = requests.get(url, browser_header)
-                try:
-                    with open(file_name, "wb") as f:
-                        f.write(req.content)
-                except FileNotFoundError:
-                    os.mkdir(cache_dir)
-                    with open(file_name, "wb") as f:
-                        f.write(req.content)
-
-            playsound(file_name)
+    def pronounce(self, index: int):
+        url = self.pronounces[index][1][1].split("|")[0]
+        file_name = cache_dir + url[-32:] + ".mp3"
+        if not os.path.exists(file_name):
+            req = requests.get(url, browser_header)
+            try:
+                with open(file_name, "wb") as f:
+                    f.write(req.content)
+            except FileNotFoundError:
+                os.mkdir(cache_dir)
+                with open(file_name, "wb") as f:
+                    f.write(req.content)
+        playsound(file_name)
 
 
 class Page:

@@ -2,13 +2,10 @@ import multiprocessing
 import shutil
 import webbrowser
 from os.path import exists
-from platform import system
 
-from PyQt5.QtCore import QSize
-from PyQt5.QtGui import QKeySequence, QFont, QIcon
-from PyQt5.QtWidgets import QTableWidgetItem, QTableWidget, QShortcut, QPushButton, QSizePolicy
 from requests import exceptions
 
+import resources_rc
 from dictionary import *
 from main_ui import *
 
@@ -17,35 +14,14 @@ if system() == "Windows":
     from win32.win32api import GetSystemMetrics
     import win32con
     hDC = win32gui.GetDC(0)
-    original_width = win32print.GetDeviceCaps(hDC, win32con.DESKTOPHORZRES)
+    original_size = (win32print.GetDeviceCaps(hDC, win32con.DESKTOPHORZRES), win32print.GetDeviceCaps(hDC, win32con.DESKTOPVERTRES))
     scaled_width = GetSystemMetrics(0)
-    screen_scale = int(original_width / scaled_width)
+    screen_scale = int(original_size[0] / scaled_width)
 
 langFamily = ["ko", "en", "zh", "ja"]
 kr_langFamily = {"ko": "국어", "en": "영어", "zh": "중국어", "ja": "일본어"}
 default_font = QFont("맑은 고딕", 14)
 
-
-class QPushButton(QPushButton):
-    base_font = QFont("맑은 고딕")
-
-    def __init__(self, *__args):
-        self.size = None
-        super(QPushButton, self).__init__(*__args)
-        self.icon_size = (self.iconSize().width(), self.iconSize().height())
-        self.pressed.connect(self.decrease_size)
-        self.released.connect(self.reset_size)
-
-    def decrease_size(self):
-        self.size = self.font().pointSize()
-        self.base_font.setPointSize(self.size - 1)
-        self.setFont(self.base_font)
-        self.setIconSize(QSize(self.icon_size[0] - 1, self.icon_size[1] - 1))
-
-    def reset_size(self):
-        self.base_font.setPointSize(self.size)
-        self.setFont(self.base_font)
-        self.setIconSize(QSize(self.icon_size[0], self.icon_size[1]))
 
 class ErrorPopup(QDialog):
     def __init__(self, message: str):
@@ -60,6 +36,7 @@ class InfoTable(QTableWidget):
         length = 0
         printed = 0
         for index in range(len(word.pronounces)):
+            length += 1
             if (word.pronounces[index][1][0] is not None) or (word.pronounces[index][1][1] != ""):
                 length += 1
             if word.traditional_zh is not None:
@@ -97,14 +74,14 @@ class PronounceButton(QPushButton):
         super().__init__(QIcon(":/images/play-sound.svg"), pron_locale + pron)
         if word.pronounces[index][1][1] == "":
             self.setDisabled(True)
-        self.clicked.connect(lambda: word.download_pronunciation(index))
+        self.clicked.connect(lambda: word.pronounce(index))
         self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
         self.setFont(default_font)
 
     @staticmethod
     @pyqtSlot()
     def pronounce(word: Word, index):
-        p = multiprocessing.Process(target=word.download_pronunciation, args=(index,))
+        p = multiprocessing.Process(target=word.pronounce, args=(index,))
         p.start()
 
 
@@ -140,7 +117,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.ui = Ui_MainWindow()
-        self.ui.setupUi(self, screen_scale)
+        self.ui.setupUi(self, screen_scale, original_size)
         self.ui.queryEdit.setFocus()
         self.page = 0
         self.dict_obj = None
@@ -170,11 +147,12 @@ class MainWindow(QMainWindow):
 
     def first_query(self, lang: str, query: str):
         if query != "":
-            self.ui.queryEdit.setFixedHeight(40 * screen_scale)
-            self.ui.showTable(self, screen_scale)
-            self.ui.MainTable.setEditTriggers(QTableWidget.NoEditTriggers)
-            self.ui.MainTable.cellDoubleClicked.connect(self.open_in_web_browser)
-            self.ui.loadMoreButton.clicked.connect(self.load_more)
+            if self.ui.isTableVisible is False:
+                self.ui.queryEdit.setFixedHeight(40 * screen_scale)
+                self.ui.showTable(self, screen_scale, original_size)
+                self.ui.MainTable.setEditTriggers(QTableWidget.NoEditTriggers)
+                self.ui.MainTable.cellDoubleClicked.connect(self.open_in_web_browser)
+                self.ui.loadMoreButton.clicked.connect(self.load_more)
 
             self.rowCount = 0
             self.page = 0
@@ -191,6 +169,7 @@ class MainWindow(QMainWindow):
             except exceptions.ConnectionError:
                 a = ErrorPopup("데이터를 받아올 수 없습니다. 인터넷을 확인하세요.")
                 a.exec_()
+            self.set_focus_on_search()
         else:
             pass
 
@@ -199,7 +178,7 @@ class MainWindow(QMainWindow):
 
     def print_on_table(self, page: Page):
 
-        self.ui.MainTable.setRowCount(self.ui.MainTable.rowCount() + self.count_meanings(page))
+        self.ui.MainTable.setRowCount(self.ui.MainTable.rowCount() + self.count_rows_to_add(page))
         for i in range(len(page.words)):
             current_word = page.words[i]
             word_start_pos = self.rowCount
@@ -258,24 +237,23 @@ class MainWindow(QMainWindow):
         #     self.ui.queryEdit.setFont(default_font)
 
     @staticmethod
-    def count_meanings(page: Page):
+    def count_rows_to_add(page: Page):
         count = 0
         for word_count in range(len(page.words)):
-            count += 1
             for part_of_speech in page.words[word_count].mean.keys():
                 for meanings in range(len(page.words[word_count].mean[part_of_speech])):
                     count += 1
-            if len(page.words[word_count].pronounces) == 0:
-                count -= 1
+            if len(page.words[word_count].pronounces) != 0 or page.words[word_count].traditional_zh is not None:
+                count += 1
         return count
 
-    @pyqtSlot()
     def load_more(self):
         self.dict_obj.load_next_page()
         self.print_on_table(self.dict_obj.pages[self.page])
 
     def switch_lang(self, lang: int):
         self.ui.LangBox.setCurrentIndex(lang)
+        self.set_focus_on_search()
 
     def set_focus_on_search(self):
         self.ui.queryEdit.setFocus()

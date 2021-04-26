@@ -4,17 +4,18 @@
 }
 *{
     border: 1px solid lightgray;
-    border-radius: 4px;
+    border-radius: 6px;
 }
 .QLineEdit {
+    border: 2px solid gray;
     background: white;
 }
 .QLineEdit:focus {
     border: 2px solid dodgerblue;
 }
 .QPushButton, .PronounceButton {
-    border: 3px solid dodgerblue;
-    border-radius: 4px;
+    border: 1px solid dodgerblue;
+    border-radius: 6px;
     background: dodgerblue;
     color: black;
 }
@@ -23,19 +24,15 @@
     border: #3F94D7;
 }
 .QPushButton:pressed, .PronounceButton:pressed {
-    border: 2px solid white;
+    border: 1px solid white;
 }
-/*.PronunciationLabel {*/
-/*    border: 0;*/
-/*    background: white;*/
-/*}*/
 .QSplitter, .QSplitter::handle {
     border: 0;
     background: white;
 }
 .QComboBox {
     border: 1px solid lightgray;
-    border-radius: 4px;
+    border-radius: 6px;
     background: lightgray;
     padding-left: 13px;
 }
@@ -46,8 +43,12 @@
     padding-right: 30px;
 }
 .QComboBox:hover {
-    border: 2px solid gray;
+    border: 1px solid gray;
     background: gray;
+}
+.QComboBox:on {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
 }
 .QComboBox::drop-down {
     border: 0;
@@ -63,15 +64,16 @@
 .QScrollBar::handle {
     background: lightgray;
     border: 3px solid lightgray;
-    border-radius: 2px;
+    border-radius: 6px;
 }
 .QHeaderView {
     border: 0;
     border-radius: 0;
     border-bottom: 2px solid lightgray;
 }
-.QHeaderView::item {
+.QHeaderView::section {
     border: 1px solid lightgray;
+    color: black;
 }
 .InfoTable {
     border: 0;
